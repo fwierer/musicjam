@@ -1,7 +1,3 @@
-<img width="780" height="1688" alt="Guest search   pick (phone)" src="https://github.com/user-attachments/assets/400e6422-55b6-4929-b423-0fc453264a41" />
-<img width="780" height="1688" alt="Guest session ended (phone)" src="https://github.com/user-attachments/assets/bbbd5baa-87c4-4ebf-95a6-2cca96225c24" />
-<img width="2880" height="1800" alt="Host screen (laptop TV)" src="https://github.com/user-attachments/assets/c07d9dc4-0e9d-4afd-bdf3-fc39f6d326c8" />
-<img width="2560" height="1600" alt="Start page (desktop)" src="https://github.com/user-attachments/assets/63a04029-7269-42d5-9d0a-66c6fc1fd4a3" />
 # Music Jam 
  
 Shared listening sessions: one **host** device plays music, **guests** join by QR code on their phones, search YouTube, and add songs to a shared queue.
@@ -50,4 +46,10 @@ A room is deleted when the host ends it, when the host has been gone longer than
 - YouTube quota is about **100 searches per day**, so cache results and search only on submit
 - The YouTube player must stay visible, and audio extraction is not allowed
 - Use a laptop or PC as the host, since phones stop playback when the screen turns off
- 
+
+## UI draft
+
+<img width="780" height="1688" alt="Guest search   pick (phone)" src="https://github.com/user-attachments/assets/400e6422-55b6-4929-b423-0fc453264a41" />
+<img width="780" height="1688" alt="Guest session ended (phone)" src="https://github.com/user-attachments/assets/bbbd5baa-87c4-4ebf-95a6-2cca96225c24" />
+<img width="2880" height="1800" alt="Host screen (laptop TV)" src="https://github.com/user-attachments/assets/c07d9dc4-0e9d-4afd-bdf3-fc39f6d326c8" />
+<img width="2560" height="1600" alt="Start page (desktop)" src="https://github.com/user-attachments/assets/63a04029-7269-42d5-9d0a-66c6fc1fd4a3" />
