@@ -1,4 +1,8 @@
 package main
 
-//"net/http"
-//"github.com/gorilla/sessions"
+import "github.com/FullStackKlerant/musicjam/backend/room"
+
+func main() {
+	nRoom := room.NewRoom()
+	println(nRoom.Code())
+}
