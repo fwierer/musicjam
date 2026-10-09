@@ -1,4 +1,3 @@
-module github.com/gorilla/sessions
+module musicjam
 
-
-go 1.26.8
+go 1.26
