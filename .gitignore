@@ -1,1 +1,6 @@
 LEARNING_NOTES.md
+
+# Go build cache and compiled binaries
+.gocache/
+backend/backend
+*.exe
