@@ -21,11 +21,19 @@ type Room struct {
 	roomCode    string
 	host        Member
 	roomMembers map[Member]int
+	Queue       []Song
+}
+
+// Song in a room's queue
+type Song struct {
+	VideoID string `json:"videoId"`
+	Title   string `json:"title"`
+	Channel string `json:"channel"`
 }
 
 // Constructor for Room that assignes a new room code
 func NewRoom() *Room {
-	return &Room{roomCode: GenerateRandomRoomNo(6)}
+	return &Room{roomCode: GenerateRandomRoomNo(6), Queue: []Song{}}
 }
 
 // geter to make the roomcode inaccessable form the outside
