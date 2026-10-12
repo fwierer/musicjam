@@ -8,18 +8,25 @@
     </head>
     <body>
       <div id="nav"></div>
-      <main class="container text-center py-5">
-        <h1 class="mb-4">Jam together</h1>
-        <button type="button" class="btn btn-dark btn-lg" id="create-session">Create Session</button>
+      <main class="container py-5" style="max-width: 420px;">
+        <h1 class="mb-4 text-center">Jam together</h1>
+
+        <label class="form-label" for="user-name">Your name</label>
+        <input class="form-control mb-4" id="user-name" type="text" placeholder="e.g. Alex" autocomplete="off">
+
+        <button type="button" class="btn btn-dark btn-lg w-100" id="create-session">Create Session</button>
+
+        <div class="text-center text-body-secondary my-3">or</div>
+
+        <form class="input-group" id="join-form">
+          <input class="form-control text-uppercase" id="join-code" type="text" placeholder="Room code" maxlength="6" autocomplete="off">
+          <button class="btn btn-outline-dark" type="submit">Join</button>
+        </form>
+
+        <div class="alert alert-danger mt-3 d-none" id="error"></div>
       </main>
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
       <script src="components/nav.js"></script>
-      <script>
-        document.getElementById("create-session").addEventListener("click", () => {
-          // Placeholder room code until the backend creates real rooms
-          const room = Math.random().toString(36).slice(2, 8).toUpperCase();
-          window.location.href = "session.html?room=" + room;
-        });
-      </script>
+      <script src="js/room.js"></script>
     </body>
 </html>

@@ -32,6 +32,7 @@
                 <h2 class="h5">Join this session</h2>
                 <div id="qrcode" class="d-flex justify-content-center my-3"></div>
                 <p class="mb-0">Room code: <strong id="room-code"></strong></p>
+                <p class="mb-0 small text-body-secondary">You are: <span id="user-info"></span></p>
               </div>
             </div>
             <div class="card">
@@ -48,13 +49,28 @@
       <script src="components/nav.js"></script>
       <script src="js/youtube-search.js"></script>
       <script>
-        const room = new URLSearchParams(location.search).get("room") || "UNKNOWN";
-        document.getElementById("room-code").textContent = room;
-        new QRCode(document.getElementById("qrcode"), {
-          text: location.href,
-          width: 180,
-          height: 180,
-        });
+        (async () => {
+          const room = new URLSearchParams(location.search).get("room");
+          const response = await fetch("/api/session");
+
+          // No session, or session belongs to another room: send the user to the join page
+          const session = response.ok ? await response.json() : null;
+          if (!session || (room && session.roomCode !== room)) {
+            window.location.href = room ? "/?join=" + encodeURIComponent(room) : "/";
+            return;
+          }
+
+          document.getElementById("room-code").textContent = session.roomCode;
+          document.getElementById("user-info").textContent =
+            session.name + (session.isHost ? " (Host)" : "");
+
+          // QR code leads to the start page with the room code filled in
+          new QRCode(document.getElementById("qrcode"), {
+            text: location.origin + "/?join=" + session.roomCode,
+            width: 180,
+            height: 180,
+          });
+        })();
       </script>
     </body>
 </html>
