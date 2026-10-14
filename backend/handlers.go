@@ -14,6 +14,7 @@ func registerHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/api/youtube/search", handleYouTubeSearch)
 	mux.HandleFunc("/api/room/create", createNewRoom)
 	mux.HandleFunc("/api/room/join", joinRoom)
+	mux.HandleFunc("/api/room/queue", handleQueue)
 	mux.HandleFunc("/api/session", getSession)
 	mux.Handle("/", http.FileServer(http.Dir("../frontend")))
 }
@@ -82,4 +83,69 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(s)
+}
+
+func handleQueue(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie("userId")
+	if err != nil {
+		http.Error(w, "no session", http.StatusUnauthorized)
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	s, ok := sessions[c.Value]
+	if !ok {
+		http.Error(w, "no session", http.StatusUnauthorized)
+		return
+	}
+
+	rm, ok := rooms[s.RoomCode]
+	if !ok {
+		http.Error(w, "room not found", http.StatusNotFound)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		json.NewEncoder(w).Encode(rm.Queue)
+	case http.MethodPost:
+		var song room.Song
+		if err := json.NewDecoder(r.Body).Decode(&song); err != nil {
+			http.Error(w, "invalid song", http.StatusBadRequest)
+			return
+		}
+		if song.VideoID == "" || song.Title == "" {
+			http.Error(w, "missing song data", http.StatusBadRequest)
+			return
+		}
+		song.ID = rand.Text()
+		rm.Queue = append(rm.Queue, song)
+		log.Printf("%q added a song\n%s", s.Name, rm)
+		json.NewEncoder(w).Encode(rm.Queue)
+	case http.MethodDelete:
+		if !rm.IsHost(c.Value) {
+			http.Error(w, "only the host can advance playback", http.StatusForbidden)
+			return
+		}
+		var finished struct {
+			SongID string `json:"songId"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&finished); err != nil || finished.SongID == "" {
+			http.Error(w, "missing song ID", http.StatusBadRequest)
+			return
+		}
+		// A delayed or repeated end event must not remove the next song.
+		if len(rm.Queue) == 0 || rm.Queue[0].ID != finished.SongID {
+			http.Error(w, "current song has changed", http.StatusConflict)
+			return
+		}
+		rm.Queue = rm.Queue[1:]
+		log.Printf("song finished\n%s", rm)
+		json.NewEncoder(w).Encode(rm.Queue)
+	default:
+		w.Header().Set("Allow", "GET, POST, DELETE")
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }

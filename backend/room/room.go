@@ -12,6 +12,7 @@ const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 // Song in a room's queue
 type Song struct {
+	ID      string `json:"id"`
 	VideoID string `json:"videoId"`
 	Title   string `json:"title"`
 	Channel string `json:"channel"`
