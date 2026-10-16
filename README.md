@@ -1,53 +1,49 @@
-# Music Jam 
- 
-Shared listening sessions: one **host** device plays music, **guests** join by QR code on their phones, search YouTube, and add songs to a shared queue.
- 
-## Features
- 
-- Host creates a room and gets a room code plus QR code
-- Guests join by QR code, no account needed
-- Search songs via YouTube, shared real-time queue
-- Only the host device plays audio
-- AI filter blocks songs that don't fit the occasion (e.g. "Happy" at a funeral)
+# Music Jam
+
+Music Jam is a shared listening app for parties and get-togethers. One **host** device (a laptop or TV) plays the music. **Guests** join on their phones by scanning a QR code, search YouTube, and add songs to a shared queue. No account is needed. An AI filter keeps the queue suited to the occasion, so nobody can sneak "Happy" into a funeral playlist.
+
 ## Tech stack
- 
+
 | Part | Choice |
 |---|---|
-| Frontend | HTML, Bootstrap, a little vanilla JS |
-| Backend | Go + WebSockets |
-| Live data | Redis (rooms, queues, cache, with TTL) |
-| Persistent data | PostgreSQL (history, stats, later) |
-| Search / playback | YouTube Data API v3 / YouTube IFrame Player API |
-| AI filter | Small hosted LLM |
-| Hosting | Render or Railway (needs HTTPS for QR codes) |
- 
-## How it works
- 
-1. Host starts a jam and picks the occasion. The server creates a room with a code and a secret host token.
-2. Guests scan the QR code (`/join/<code>`) and connect via WebSocket.
-3. Searches go through our server, which calls YouTube and caches the results.
-4. Each added song is checked by the AI filter, then broadcast to everyone.
-5. The host page plays the queue and moves to the next song when one ends.
-## AI song filter
- 
-The server sends the song title, artist, and room occasion to an LLM, which returns JSON:
-`{"verdict": "allow" | "review" | "block", "reason": "..."}`
- 
-- **review:** the host decides (also used for unknown songs or AI errors)
-- The host can always override the AI
-- Verdicts are cached in Redis per song + occasion
-- Song titles are untrusted input, so we only accept the three verdict values (prompt injection protection)
-## Session cleanup
- 
-A room is deleted when the host ends it, when the host has been gone longer than 10 minutes, after 1 hour of inactivity, or after 24 hours max.
- 
-## Important limits
- 
-- YouTube quota is about **100 searches per day**, so cache results and search only on submit
-- The YouTube player must stay visible, and audio extraction is not allowed
-- Use a laptop or PC as the host, since phones stop playback when the screen turns off
+| Frontend | HTML, Bootstrap 5, vanilla JS |
+| Backend | Go (`net/http`) |
+| Live data | In-memory for now, Redis planned (rooms, queues, cache with TTL) |
+| Search / playback | YouTube Data API v3 and YouTube IFrame Player API |
+| QR codes | qrcode.js |
+| AI filter | Small hosted LLM (planned) |
+| Hosting | Render or Railway (QR codes need HTTPS) |
 
-## UI draft
+## YouTube API
+
+- **Search** goes through our backend (`/api/youtube/search`), which calls the YouTube Data API v3 `search` endpoint. This keeps the API key (`YOUTUBE_API_KEY`) on the server.
+- Results are limited to embeddable, syndicated music videos (category 10) in the configured region (`YOUTUBE_REGION`, default `IT`), 5 results per search.
+- **Playback** uses the YouTube IFrame Player API on the host page. When a song ends, the host moves the queue to the next song.
+- **Quota:** about 100 searches per day, so we search only on submit and will cache results.
+- The player has to stay visible, and extracting the audio is not allowed by YouTube's terms.
+
+## Functional requirements
+
+- The host creates a room and gets a room code and a QR code
+- Guests join by QR code or room code, without an account
+- Guests and the host search for songs on YouTube
+- Everyone adds songs to a shared queue and sees it update
+- Only the host device plays audio, and it plays the queue in order
+- **AI filter:** when a room is created, the host picks an occasion. Every added song is checked against it: the server sends the title, artist and occasion to an LLM, which returns `allow`, `review` or `block`
+  - `review` lets the host decide (also used for unknown songs or AI errors)
+  - The host can always override the AI
+  - Verdicts are cached per song and occasion
+  - Song titles are untrusted input, so only the three verdict values are accepted (protection against prompt injection)
+- **Session cleanup:** a room is deleted when the host ends it, when the host has been gone for more than 10 minutes, after 1 hour of inactivity, or after 24 hours at most
+
+## Currently implemented
+
+- **Hosting sessions:** the host creates a room with a random code and gets a QR code that links to the join page
+- **Joining a session:** guests join by scanning the QR code or typing the room code. A cookie identifies each user
+- **The queue:** everyone can add songs. The queue refreshes every 3 seconds, and only the host can advance it. A song is removed only if it is still the current one, so a delayed "ended" event can't skip the next song
+- **YouTube player:** search through the backend, and playback on the host page that moves to the next song automatically
+
+## UI design (AI draft)
 
 <img width="780" height="1688" alt="Guest search   pick (phone)" src="https://github.com/user-attachments/assets/400e6422-55b6-4929-b423-0fc453264a41" />
 <img width="780" height="1688" alt="Guest session ended (phone)" src="https://github.com/user-attachments/assets/bbbd5baa-87c4-4ebf-95a6-2cca96225c24" />

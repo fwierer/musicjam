@@ -15,6 +15,7 @@ func registerHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/api/room/create", createNewRoom)
 	mux.HandleFunc("/api/room/join", joinRoom)
 	mux.HandleFunc("/api/room/queue", handleQueue)
+	mux.HandleFunc("/api/room/getRoomMembers", getRoomMembers)
 	mux.HandleFunc("/api/session", getSession)
 	mux.Handle("/", http.FileServer(http.Dir("../frontend")))
 }
@@ -68,6 +69,19 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]any{"code": code, "isHost": rm.IsHost(userID)})
 }
 
+func getRoomMembers(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	mu.Lock()
+	defer mu.Unlock()
+	curentRoom, ok := rooms[code]
+	// if room not found throw error
+	if !ok {
+		http.Error(w, "room not found", http.StatusNotFound)
+		return
+	}
+	json.NewEncoder(w).Encode(curentRoom.Members)
+}
+
 // returns the session of the current user
 func getSession(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie("userId")
@@ -76,13 +90,13 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mu.Lock()
-	s, ok := sessions[c.Value]
+	currentSession, ok := sessions[c.Value]
 	mu.Unlock()
 	if !ok {
 		http.Error(w, "no session", http.StatusUnauthorized)
 		return
 	}
-	json.NewEncoder(w).Encode(s)
+	json.NewEncoder(w).Encode(currentSession)
 }
 
 func handleQueue(w http.ResponseWriter, r *http.Request) {

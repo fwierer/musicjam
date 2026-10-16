@@ -28,12 +28,12 @@ type Member struct {
 type Room struct {
 	roomCode string
 	hostID   string
-	members  map[string]Member // key: user ID
+	Members  map[string]Member // key: user ID
 	Queue    []Song
 }
 
 func (room *Room) AddMember(m Member) {
-	room.members[m.ID] = m
+	room.Members[m.ID] = m
 }
 func (room *Room) IsHost(userID string) bool {
 	return room.hostID == userID
@@ -50,7 +50,7 @@ func NewRoom(host Member, codeTaken func(string) bool) *Room {
 	return &Room{
 		roomCode: code,
 		hostID:   host.ID,
-		members:  map[string]Member{host.ID: host},
+		Members:  map[string]Member{host.ID: host},
 		Queue:    []Song{},
 	}
 }
@@ -62,9 +62,9 @@ func (room *Room) Code() string {
 
 // String formats the room for the terminal, host first, then members by name
 func (room *Room) String() string {
-	members := make([]Member, 0, len(room.members))
+	members := make([]Member, 0, len(room.Members))
 	nameWidth := len("(no name)")
-	for _, m := range room.members {
+	for _, m := range room.Members {
 		members = append(members, m)
 		nameWidth = max(nameWidth, len(m.Name))
 	}
