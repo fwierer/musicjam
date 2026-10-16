@@ -3,6 +3,9 @@ const code = (new URLSearchParams(location.search).get("code") ?? "").toUpperCas
 document.getElementById("room-code").textContent = code;
 
 let poll;
+let refreshing = false;
+let addingSong = false;
+let queueVersion = 0;
 
 join();
 
@@ -18,18 +21,36 @@ async function join() {
 }
 
 async function refresh() {
-  const response = await fetch("/api/room/queue");
-  if (!response.ok) {
-    showEnded(); // the room is gone
-    return;
+  if (refreshing || addingSong) return;
+  refreshing = true;
+  const version = queueVersion;
+  try {
+    const response = await fetch("/api/room/queue");
+    if (response.status === 401 || response.status === 404) {
+      showEnded();
+      return;
+    }
+    if (!response.ok) throw new Error("Could not load queue.");
+    const queue = await response.json();
+    if (version === queueVersion) updateQueue(queue ?? []);
+  } catch (error) {
+    document.getElementById("search-status").textContent = "Could not refresh queue. Retrying...";
+  } finally {
+    refreshing = false;
   }
-  const queue = await response.json();
-  // No queue in Sprint 1: the song picked last is the one that plays
-  const song = queue[queue.length - 1];
+}
+
+function updateQueue(queue) {
+  renderQueue(queue);
+  const song = queue[0];
   if (song) {
     document.getElementById("now-thumb").src = `https://i.ytimg.com/vi/${song.videoId}/default.jpg`;
     document.getElementById("now-title").textContent = song.title;
-    document.getElementById("now-meta").textContent = song.channel + " · picked by a guest";
+    document.getElementById("now-meta").textContent = song.channel;
+  } else {
+    document.getElementById("now-thumb").removeAttribute("src");
+    document.getElementById("now-title").textContent = "Nothing yet";
+    document.getElementById("now-meta").textContent = "";
   }
 }
 
@@ -69,19 +90,33 @@ document.getElementById("search-form").addEventListener("submit", async (event) 
         <div class="fw-medium text-truncate"></div>
         <div class="small text-body-secondary text-truncate"></div>
       </div>
-      <button type="button" class="btn btn-outline-primary">Play</button>
+      <button type="button" class="btn btn-outline-primary">Add to queue</button>
     `;
     // textContent, not innerHTML, so song titles can't inject HTML
     row.querySelector("img").src = song.thumbnail;
     row.querySelector(".fw-medium").textContent = song.title;
     row.querySelector(".small").textContent = song.channel;
-    row.querySelector("button").addEventListener("click", async () => {
-      await fetch("/api/room/queue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId: song.videoId, title: song.title, channel: song.channel }),
-      });
-      refresh();
+    const button = row.querySelector("button");
+    button.addEventListener("click", async () => {
+      if (addingSong) return;
+      addingSong = true;
+      queueVersion++;
+      button.disabled = true;
+      try {
+        const response = await fetch("/api/room/queue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: song.videoId, title: song.title, channel: song.channel }),
+        });
+        if (!response.ok) throw new Error("Could not add song.");
+        updateQueue((await response.json()) ?? []);
+        status.textContent = "Added to queue.";
+      } catch (error) {
+        status.textContent = "Could not add song to queue. Please try again.";
+      } finally {
+        addingSong = false;
+        button.disabled = false;
+      }
     });
     results.appendChild(row);
   }

@@ -163,9 +163,16 @@ header {
 
 .qr {
   display: inline-block;
+  max-width: 100%;
   padding: 12px;
   background: #fff;
   border-radius: 12px;
+}
+
+.qr img,
+.qr canvas {
+  max-width: 100%;
+  height: auto;
 }
 
 .room-code {
@@ -201,6 +208,19 @@ header {
 .result-text {
   flex: 1;
   min-width: 0;
+}
+
+.queue-entry {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.queue-title,
+.queue-channel {
+  overflow-wrap: anywhere;
 }
 
 .ended-icon {
