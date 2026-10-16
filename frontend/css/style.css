@@ -1,0 +1,215 @@
+/* Dark theme: overrides Bootstrap's CSS variables */
+:root,
+[data-bs-theme="dark"] {
+  --bs-body-bg: #121417;
+  --bs-body-color: #F2F2EE;
+  --bs-body-color-rgb: 242, 242, 238;
+  --bs-secondary-color: #A3A8B0;
+  --bs-border-color: #2C3038;
+  --bs-body-font-family: "IBM Plex Sans", sans-serif;
+  --accent: #C6F432;
+}
+
+h1, h2, .logo, .room-code {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+}
+
+header {
+  border-bottom: 1px solid #2C3038;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  color: #F2F2EE;
+  text-decoration: none;
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logo .icon {
+  color: var(--accent);
+}
+
+.card {
+  --bs-card-bg: #1C1F24;
+  --bs-card-color: #F2F2EE;
+  --bs-card-border-color: #2C3038;
+  --bs-card-border-radius: 16px;
+}
+
+.form-control,
+.form-control:focus {
+  min-height: 48px;
+  background-color: #121417;
+  border-color: #3A3F48;
+  border-radius: 10px;
+  color: #F2F2EE;
+}
+
+.form-control:focus {
+  border-color: var(--accent);
+  box-shadow: none;
+}
+
+.form-control::placeholder {
+  color: #8A9099;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.btn-primary {
+  --bs-btn-color: #121417;
+  --bs-btn-bg: var(--accent);
+  --bs-btn-border-color: var(--accent);
+  --bs-btn-hover-color: #121417;
+  --bs-btn-hover-bg: #D5F86A;
+  --bs-btn-hover-border-color: #D5F86A;
+  --bs-btn-active-color: #121417;
+  --bs-btn-active-bg: #B2DC2A;
+  --bs-btn-active-border-color: #B2DC2A;
+  min-height: 50px;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--accent);
+  --bs-btn-border-color: var(--accent);
+  --bs-btn-hover-color: #121417;
+  --bs-btn-hover-bg: var(--accent);
+  --bs-btn-hover-border-color: var(--accent);
+  --bs-btn-active-color: #121417;
+  --bs-btn-active-bg: var(--accent);
+  --bs-btn-active-border-color: var(--accent);
+}
+
+.btn-outline-danger {
+  --bs-btn-color: #FFB4A8;
+  --bs-btn-border-color: #5A3A3A;
+  --bs-btn-hover-color: #FFB4A8;
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-hover-border-color: #FFB4A8;
+}
+
+.label {
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.pill {
+  padding: 4px 12px;
+  border: 1px solid #2C3038;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.error {
+  color: #FFB4A8;
+}
+
+/* Start page */
+.hero {
+  font-size: clamp(40px, 6vw, 64px);
+  line-height: 1.05;
+}
+
+.code-input {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+/* Host screen */
+.player {
+  border-radius: 16px;
+  overflow: hidden;
+  background: #1C1F24;
+}
+
+.song-title {
+  font-size: 28px;
+}
+
+.qr {
+  display: inline-block;
+  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.room-code {
+  font-size: 48px;
+  letter-spacing: 8px;
+  color: var(--accent);
+}
+
+/* Guest screen */
+.thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #121417;
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #2C3038;
+}
+
+.result img {
+  width: 72px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.result-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ended-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border: 1px solid #2C3038;
+  border-radius: 50%;
+  color: #A3A8B0;
+}
