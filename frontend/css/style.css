@@ -181,6 +181,25 @@ header {
   color: var(--accent);
 }
 
+.member-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #2C3038;
+}
+
+.member:last-child {
+  border-bottom: 0;
+}
+
 /* Guest screen */
 .thumb {
   width: 56px;

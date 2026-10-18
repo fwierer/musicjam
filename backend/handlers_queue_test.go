@@ -13,7 +13,7 @@ import (
 func TestQueuePlayback(t *testing.T) {
 	previousRooms, previousSessions := rooms, sessions
 	t.Cleanup(func() { rooms, sessions = previousRooms, previousSessions })
-	rm := room.NewRoom(room.Member{ID: "host", Name: "Host"}, func(string) bool { return false })
+	rm := room.NewRoom("host", "Host", func(string) bool { return false })
 	rooms = map[string]*room.Room{rm.Code(): rm}
 	sessions = map[string]*Session{
 		"host":  {Name: "Host", RoomCode: rm.Code(), IsHost: true},

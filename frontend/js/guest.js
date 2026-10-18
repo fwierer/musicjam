@@ -1,4 +1,4 @@
-// The page is opened as /guest.html?code=K7MX2P
+// The page is opened as /guest.html?code=K7MX2P after joining on the start page
 const code = (new URLSearchParams(location.search).get("code") ?? "").toUpperCase();
 document.getElementById("room-code").textContent = code;
 
@@ -7,13 +7,14 @@ let refreshing = false;
 let addingSong = false;
 let queueVersion = 0;
 
-join();
+init();
 
-async function join() {
-  // Joining sets the userId cookie that /api/room/queue needs
-  const response = await fetch("/api/room/join?code=" + encodeURIComponent(code), { method: "POST" });
-  if (!response.ok) {
-    showEnded();
+async function init() {
+  // Joining on the start page sets the userId cookie and the name. Without it, go there first.
+  const response = await fetch("/api/session");
+  const session = response.ok ? await response.json() : null;
+  if (session?.roomCode !== code) {
+    location.href = "/?join=" + encodeURIComponent(code);
     return;
   }
   refresh();
@@ -27,7 +28,7 @@ async function refresh() {
   try {
     const response = await fetch("/api/room/queue");
     if (response.status === 401 || response.status === 404) {
-      showEnded();
+      showEnded(); // the room is gone or the host removed this guest
       return;
     }
     if (!response.ok) throw new Error("Could not load queue.");

@@ -1,66 +1,58 @@
+// Start page: host a jam or join one. Both need a name, the server keeps it in the session.
 const nameInput = document.getElementById("user-name");
-const joinForm = document.getElementById("join-form");
 const joinCodeInput = document.getElementById("join-code");
-const errorBox = document.getElementById("error");
 
-// Prefill the room code when arriving via the QR code (/?join=CODE)
+// The QR code on the host screen opens /?join=CODE, so only the name is left to fill in
 const joinParam = new URLSearchParams(location.search).get("join");
 if (joinParam) {
-  joinCodeInput.value = joinParam;
+  joinCodeInput.value = joinParam.toUpperCase();
   nameInput.focus();
 }
 
-document.getElementById("create-session").addEventListener("click", async () => {
-  const name = getName();
+document.getElementById("start-jam").addEventListener("click", async () => {
+  const name = readName();
   if (!name) {
     return;
   }
 
-  const response = await fetch(`/api/room/create?name=${encodeURIComponent(name)}`, { method: "POST" });
+  // The server remembers the host through the userId cookie it sets here
+  const response = await fetch("/api/room/create?name=" + encodeURIComponent(name), { method: "POST" });
   if (!response.ok) {
-    showError("Could not create a room.");
+    showError("start-error", "Could not start a jam. Please try again.");
     return;
   }
-
-  const data = await response.json();
-  window.location.href = "session.html?room=" + data.code;
+  location.href = "/host.html";
 });
 
-joinForm.addEventListener("submit", async (event) => {
+document.getElementById("join-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-
-  const name = getName();
-  const code = joinCodeInput.value.trim().toUpperCase();
+  const name = readName();
   if (!name) {
     return;
   }
-  if (!code) {
-    showError("Please enter a room code.");
-    return;
-  }
 
+  const code = joinCodeInput.value.trim().toUpperCase();
   const response = await fetch(
     `/api/room/join?code=${encodeURIComponent(code)}&name=${encodeURIComponent(name)}`,
     { method: "POST" }
   );
   if (!response.ok) {
-    showError("Room not found.");
+    showError("join-error", response.status === 404
+      ? "No jam found with this code."
+      : "Could not join. Please try again.");
     return;
   }
-
-  window.location.href = "session.html?room=" + code;
+  location.href = "/guest.html?code=" + encodeURIComponent(code);
 });
 
-function getName() {
-  const name = nameInput.value.trim();
-  if (!name) {
-    showError("Please enter your name.");
-    nameInput.focus();
-  }
-  return name;
+// Returns the name without surrounding spaces, or "" after the browser has asked for one
+function readName() {
+  nameInput.value = nameInput.value.trim();
+  return nameInput.reportValidity() ? nameInput.value : "";
 }
 
-function showError(message) {
-  errorBox.textContent = message;
-  errorBox.classList.remove("d-none");
+function showError(id, message) {
+  const error = document.getElementById(id);
+  error.textContent = message;
+  error.hidden = false;
 }

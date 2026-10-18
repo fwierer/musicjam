@@ -24,6 +24,14 @@
         One computer plays music from YouTube. Guests join with their phones and pick the songs.
       </p>
 
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <label class="form-label" for="user-name">Your name</label>
+          <input class="form-control" id="user-name" type="text" placeholder="e.g. Alex"
+                 maxlength="30" autocomplete="nickname" required>
+        </div>
+      </div>
+
       <div class="row g-4">
         <div class="col-md-6">
           <div class="card h-100">
@@ -48,28 +56,13 @@
                   <button class="btn btn-outline-primary px-4" type="submit">Join</button>
                 </div>
               </form>
+              <p class="error mt-2 mb-0" id="join-error" hidden></p>
             </div>
           </div>
         </div>
       </div>
     </main>
 
-    <script>
-      document.getElementById("start-jam").addEventListener("click", async () => {
-        // The server remembers the host through the userId cookie it sets here
-        const response = await fetch("/api/room/create", { method: "POST" });
-        if (!response.ok) {
-          document.getElementById("start-error").hidden = false;
-          return;
-        }
-        location.href = "/host.html";
-      });
-
-      document.getElementById("join-form").addEventListener("submit", (event) => {
-        event.preventDefault();
-        const code = document.getElementById("join-code").value.trim().toUpperCase();
-        location.href = "/guest.html?code=" + encodeURIComponent(code);
-      });
-    </script>
+    <script src="/js/room.js?v=members-1"></script>
   </body>
 </html>

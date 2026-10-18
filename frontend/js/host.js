@@ -1,5 +1,13 @@
 const startButton = document.getElementById("start-playback");
 const playbackStatus = document.getElementById("playback-status");
+const memberList = createMemberList(document.getElementById("member-list"), async (member) => {
+  if (!confirm(`Remove ${member.name} from the jam?`)) return;
+  try {
+    showGuests(await removeRoomMember(member.id));
+  } catch (error) {
+    playbackStatus.textContent = `Could not remove ${member.name}. Please try again.`;
+  }
+});
 
 let code;
 let player;
@@ -25,7 +33,8 @@ async function init() {
   }
 
   code = session.roomCode;
-  const joinUrl = location.origin + "/guest.html?code=" + code;
+  // Guests land on the start page with the code filled in, since they need to enter a name
+  const joinUrl = location.origin + "/?join=" + code;
   document.getElementById("room-code").textContent = code;
   document.getElementById("join-url").textContent = joinUrl;
   new QRCode(document.getElementById("qr-code"), { text: joinUrl, width: 260, height: 260 });
@@ -54,11 +63,7 @@ async function refresh() {
     if (version !== queueVersion) return;
     updateQueue(queue ?? []);
 
-    const membersResponse = await fetch("/api/room/getRoomMembers?code=" + encodeURIComponent(code));
-    if (membersResponse.ok) {
-      const members = await membersResponse.json();
-      document.getElementById("guest-count").textContent = Math.max(0, Object.keys(members).length - 1);
-    }
+    showGuests(await getRoomMembers(code));
   } catch (error) {
     playbackStatus.textContent = "Could not refresh queue. Retrying...";
   } finally {
@@ -101,6 +106,12 @@ function syncPlayer() {
   finishedSongId = "";
   playbackStatus.textContent = "";
   playSong(song);
+}
+
+function showGuests(members) {
+  const guests = members.filter((member) => !member.isHost);
+  document.getElementById("guest-count").textContent = guests.length;
+  memberList.show(guests);
 }
 
 function playSong(song) {
