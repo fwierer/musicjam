@@ -68,12 +68,16 @@ function renderResults(results) {
 
 async function addSongToQueue(song) {
   try {
-    await requestQueue({
+    const response = await fetch("/api/room/requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(song),
     });
-    resultsList.innerHTML = '<div class="list-group-item text-success">Added to queue.</div>';
+    if (!response.ok) throw new Error(`(${response.status})`);
+    const request = await response.json();
+    await loadQueue();
+    const message = request.queued ? "Added to queue." : "Song request submitted for genre review.";
+    resultsList.textContent = message;
   } catch (error) {
     resultsList.innerHTML = `<div class="list-group-item text-danger">Could not add song to queue. ${escapeHtml(error.message)}</div>`;
   }

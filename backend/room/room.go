@@ -41,10 +41,14 @@ type Member struct {
 }
 
 type Room struct {
-	roomCode string
-	hostID   string
-	members  map[string]Member // key: user ID
-	Queue    []Song
+	roomCode           string
+	hostID             string
+	members            map[string]Member // key: user ID
+	Queue              []Song
+	Genre              string
+	Requests           []*SongRequest
+	ProcessingRequests bool
+	nextRequest        int
 }
 
 // AddMember adds a user to the room, or renames them if they already joined
@@ -117,6 +121,8 @@ func NewRoom(hostUserID, hostName string, codeTaken func(string) bool) *Room {
 		hostID:   hostUserID,
 		members:  map[string]Member{},
 		Queue:    []Song{},
+		Genre:    "Any",
+		Requests: []*SongRequest{},
 	}
 	room.AddMember(hostUserID, hostName)
 	return room

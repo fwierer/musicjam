@@ -20,7 +20,13 @@ let finishedSongId = "";
 let latestQueue = [];
 let refreshing = false;
 let advancing = false;
+let deciding = false;
 let queueVersion = 0;
+
+const showSearchStatus = initSongSearch(async () => {
+  queueVersion++;
+  await refresh();
+});
 
 init();
 
@@ -33,6 +39,7 @@ async function init() {
   }
 
   code = session.roomCode;
+  showGenre(session.genre);
   // Guests land on the start page with the code filled in, since they need to enter a name
   const joinUrl = location.origin + "/?join=" + code;
   document.getElementById("room-code").textContent = code;
@@ -52,16 +59,19 @@ async function init() {
 }
 
 async function refresh() {
-  if (refreshing || advancing) return;
+  if (refreshing || advancing || deciding) return;
   refreshing = true;
   const version = queueVersion;
   try {
-    const response = await fetch("/api/room/queue");
+    const response = await fetch("/api/room/requests");
     if (!response.ok) throw new Error("Could not load queue.");
-    const queue = await response.json();
+    const state = await response.json();
     // Ignore a poll that started before the current song was removed.
     if (version !== queueVersion) return;
-    updateQueue(queue ?? []);
+    updateQueue(state.queue ?? []);
+    showGenre(state.genre);
+    renderSongRequests(state.requests, decideRequest);
+    showSearchStatus(state.requests);
 
     showGuests(await getRoomMembers(code));
   } catch (error) {
@@ -69,6 +79,28 @@ async function refresh() {
   } finally {
     refreshing = false;
   }
+}
+
+async function decideRequest(requestId, decision) {
+  deciding = true;
+  queueVersion++;
+  const version = queueVersion;
+  try {
+    const response = await fetch("/api/room/requests/decision", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId, decision }),
+    });
+    if (!response.ok) throw new Error("Decision failed");
+    const state = await response.json();
+    if (version === queueVersion) {
+      updateQueue(state.queue ?? []);
+      renderSongRequests(state.requests, decideRequest);
+      showSearchStatus(state.requests);
+    }
+  } finally {
+    deciding = false;
+  }
+  await refresh();
 }
 
 function updateQueue(queue) {
@@ -166,6 +198,7 @@ async function advanceQueue() {
   if (advancing || !finishedSongId) return;
   advancing = true;
   queueVersion++;
+  const version = queueVersion;
   let queue;
   try {
     const response = await fetch("/api/room/queue", {
@@ -182,7 +215,8 @@ async function advanceQueue() {
   } finally {
     advancing = false;
   }
-  if (queue) updateQueue(queue);
+  if (queue && version === queueVersion) updateQueue(queue);
+  else if (queue) await refresh();
 }
 
 startButton.addEventListener("click", () => {

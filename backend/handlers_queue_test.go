@@ -51,7 +51,7 @@ func TestQueuePlayback(t *testing.T) {
 
 	// Repeated videos are separate queue entries; host and guest additions keep their order.
 	for i, user := range []string{"host", "guest", "host"} {
-		w := request(http.MethodPost, user, `{"id":"client-id","videoId":"same-video","title":"Song","channel":"Artist"}`)
+		w := request(http.MethodPost, user, `{"id":"client-id","videoId":"abcdefghijk","title":"Song","channel":"Artist"}`)
 		expectStatus(w, http.StatusOK)
 		queue := readQueue(w)
 		if len(queue) != i+1 || queue[i].ID == "" || queue[i].ID == "client-id" {

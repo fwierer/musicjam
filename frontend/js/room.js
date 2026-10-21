@@ -1,6 +1,19 @@
 // Start page: host a jam or join one. Both need a name, the server keeps it in the session.
 const nameInput = document.getElementById("user-name");
 const joinCodeInput = document.getElementById("join-code");
+const genreInput = document.getElementById("genre-input");
+const startJam = document.getElementById("start-jam");
+startJam.disabled = true;
+fetch("/api/genres").then(async (response) => {
+  if (!response.ok) throw new Error("Could not load genres");
+  for (const genre of await response.json()) {
+    const option = document.createElement("option");
+    option.value = genre;
+    option.textContent = genre === "Any" ? "All genres" : genre;
+    genreInput.append(option);
+  }
+  startJam.disabled = false;
+}).catch(() => showError("start-error", "Could not load genres. Please reload."));
 
 // The QR code on the host screen opens /?join=CODE, so only the name is left to fill in
 const joinParam = new URLSearchParams(location.search).get("join");
@@ -16,7 +29,7 @@ document.getElementById("start-jam").addEventListener("click", async () => {
   }
 
   // The server remembers the host through the userId cookie it sets here
-  const response = await fetch("/api/room/create?name=" + encodeURIComponent(name), { method: "POST" });
+  const response = await fetch("/api/room/create?name=" + encodeURIComponent(name) + "&genre=" + encodeURIComponent(genreInput.value), { method: "POST" });
   if (!response.ok) {
     showError("start-error", "Could not start a jam. Please try again.");
     return;

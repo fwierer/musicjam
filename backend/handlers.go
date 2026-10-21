@@ -16,6 +16,9 @@ func registerHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/api/room/create", createNewRoom)
 	mux.HandleFunc("/api/room/join", joinRoom)
 	mux.HandleFunc("/api/room/queue", handleQueue)
+	mux.HandleFunc("/api/genres", getGenres)
+	mux.HandleFunc("/api/room/requests", handleSongRequests)
+	mux.HandleFunc("/api/room/requests/decision", decideSongRequest)
 	mux.HandleFunc("/api/room/getRoomMembers", getRoomMembers)
 	mux.HandleFunc("/api/room/removeRoomMember", removeRoomMember)
 	mux.HandleFunc("/api/session", getSession)
@@ -88,6 +91,11 @@ func memberName(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 // creates new room
 func createNewRoom(w http.ResponseWriter, r *http.Request) {
+	genre, err := room.CleanGenre(r.URL.Query().Get("genre"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	name, ok := memberName(w, r)
 	if !ok {
 		return
@@ -98,6 +106,7 @@ func createNewRoom(w http.ResponseWriter, r *http.Request) {
 	newRoom := room.NewRoom(userID, name,
 		func(code string) bool { _, taken := rooms[code]; return taken })
 	rooms[newRoom.Code()] = newRoom
+	newRoom.Genre = genre
 	log.Printf("room created\n%s", newRoom)
 	sessions[userID] = &Session{Name: name, RoomCode: newRoom.Code(), IsHost: true}
 	json.NewEncoder(w).Encode(map[string]any{"code": newRoom.Code(), "isHost": true})
@@ -174,6 +183,7 @@ func removeRoomMember(w http.ResponseWriter, r *http.Request) {
 	if s := sessions[removed.UserID]; s != nil && s.RoomCode == host.room.Code() {
 		delete(sessions, removed.UserID)
 	}
+	releaseRoomRequests(host.room)
 	log.Printf("%q was removed\n%s", removed.Name, host.room)
 	json.NewEncoder(w).Encode(host.room.MemberList())
 }
@@ -186,16 +196,25 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mu.Lock()
+	defer mu.Unlock()
 	currentSession, ok := sessions[c.Value]
-	mu.Unlock()
 	if !ok {
 		http.Error(w, "no session", http.StatusUnauthorized)
 		return
 	}
-	json.NewEncoder(w).Encode(currentSession)
+	rm := rooms[currentSession.RoomCode]
+	if rm == nil {
+		http.Error(w, "room not found", http.StatusNotFound)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]any{"name": currentSession.Name, "roomCode": currentSession.RoomCode, "isHost": currentSession.IsHost, "genre": rm.Genre})
 }
 
 func handleQueue(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		submitSong(w, r, true)
+		return
+	}
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -207,20 +226,6 @@ func handleQueue(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(rm.Queue)
-	case http.MethodPost:
-		var song room.Song
-		if err := json.NewDecoder(r.Body).Decode(&song); err != nil {
-			http.Error(w, "invalid song", http.StatusBadRequest)
-			return
-		}
-		if song.VideoID == "" || song.Title == "" {
-			http.Error(w, "missing song data", http.StatusBadRequest)
-			return
-		}
-		song.ID = rand.Text()
-		rm.Queue = append(rm.Queue, song)
-		log.Printf("%q added a song\n%s", c.session.Name, rm)
 		json.NewEncoder(w).Encode(rm.Queue)
 	case http.MethodDelete:
 		if !rm.IsHost(c.userID) {

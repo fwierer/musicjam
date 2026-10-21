@@ -1,6 +1,6 @@
 # Music Jam
 
-Music Jam is a shared listening app for parties and get-togethers. One **host** device (a laptop or TV) plays the music. **Guests** join on their phones by scanning a QR code, search YouTube, and add songs to a shared queue. No account is needed. An AI filter keeps the queue suited to the occasion, so nobody can sneak "Happy" into a funeral playlist.
+Music Jam is a shared listening app for parties and get-togethers. One **host** device (a laptop or TV) plays the music. **Guests** join on their phones by scanning a QR code, search YouTube, and request songs for a shared queue. No account is needed. A local AI genre filter checks requests against the host's selected room genre, with uncertain requests reviewed by the host. Broader occasion-based moderation is planned.
 
 ## Tech stack
 
@@ -11,7 +11,7 @@ Music Jam is a shared listening app for parties and get-togethers. One **host** 
 | Live data | In-memory for now, Redis planned (rooms, queues, cache with TTL) |
 | Search / playback | YouTube Data API v3 and YouTube IFrame Player API |
 | QR codes | qrcode.js |
-| AI filter | Small hosted LLM (planned) |
+| Genre filter | Local Ollama model, structured JSON verdicts |
 | Hosting | Render or Railway (QR codes need HTTPS) |
 
 ## YouTube API
@@ -42,6 +42,41 @@ Music Jam is a shared listening app for parties and get-togethers. One **host** 
 - **Joining a session:** guests join by scanning the QR code or typing the room code. A cookie identifies each user
 - **The queue:** everyone can add songs. The queue refreshes every 3 seconds, and only the host can advance it. A song is removed only if it is still the current one, so a delayed "ended" event can't skip the next song
 - **YouTube player:** search through the backend, and playback on the host page that moves to the next song automatically
+- **Room genre:** the host selects a genre when creating a room. `All genres` keeps the unfiltered behavior.
+- **Local genre moderation:** filtered requests are checked with Ollama before admission. Only `allow` reaches the playable queue; `review` requires a host decision, and `block` is rejected. Both host and guests can request songs.
+- **Host review:** the host can approve or reject uncertain requests and override rejections. An overridden rejection is appended at the end. Earlier unresolved requests hold later approvals so ordinary admission keeps request order.
+- **Verified metadata:** the classifier receives server-fetched YouTube titles and channels, not the browser's submitted labels. Search results supply a short-lived metadata cache; other video IDs use `videos.list`.
+- **Failure handling:** missing metadata, unavailable Ollama, timeouts, and invalid model output require host review. Classification runs outside the global room mutex. Decisions are cached for 30 minutes per model, genre, and verified song metadata.
+
+## Run locally
+
+Install [Go](https://go.dev/dl/) and [Ollama](https://ollama.com/download). The default local model is [qwen3:4b](https://ollama.com/library/qwen3:4b).
+
+```powershell
+ollama pull qwen3:4b
+ollama serve
+```
+
+If the Ollama desktop application is already running, a separate `ollama serve` is unnecessary. In a second terminal, from `backend`:
+
+```powershell
+$env:YOUTUBE_API_KEY = "your-youtube-api-key"
+# Optional settings (these are the defaults):
+$env:OLLAMA_URL = "http://127.0.0.1:11434"
+$env:OLLAMA_MODEL = "qwen3:4b"
+go run .
+```
+
+Open `http://localhost:8080`, enter your name, choose a room genre, and create a jam. Guests enter their name and join using the room code or QR link. Start playback once on the host device. Pending and rejected requests appear separately from the playable queue; the host decides reviews under **Song requests**.
+
+Genre classification uses text metadata and the model's knowledge, not audio analysis. It can be wrong, particularly for obscure songs, covers, and remixes. Missing local setup never silently approves a filtered song. No OpenAI key is used. The broader occasion-based AI filter and automatic session cleanup described above are still planned.
+
+The local Ollama request uses [structured outputs](https://docs.ollama.com/capabilities/structured-outputs); the backend additionally validates the returned decision and reason.
+
+```powershell
+# In backend, without Ollama or a real YouTube key:
+go test ./...
+```
 
 ## UI design (AI draft)
 

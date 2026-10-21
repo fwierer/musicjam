@@ -252,3 +252,20 @@ header {
   border-radius: 50%;
   color: #A3A8B0;
 }
+
+.song-request {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.request-status { color: var(--accent); }
+.request-status-block { color: #FFB4A8; }
+.request-status-review { color: #FFD37D; }
+.request-status-pending { color: var(--bs-secondary-color); }
+
+.form-select {
+  min-height: 48px;
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border-color: #3A3F48;
+}
