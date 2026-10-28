@@ -1,0 +1,20 @@
+{
+  "room_code": "I1VY9A",
+  "host_id": "YQD66C2K6QXQZPBI6AK5RC6PG4",
+  "members": {
+    "5MH44LBZM6UXBVFOXC4BOGG5NI": {
+      "id": "2BHXQSXG3C743IN47GEBF6FJE2",
+      "name": "Megatron",
+      "isHost": false
+    },
+    "YQD66C2K6QXQZPBI6AK5RC6PG4": {
+      "id": "P52ZUCFXR6PIS3E67WXYCTVXUR",
+      "name": "John",
+      "isHost": true
+    }
+  },
+  "queue": [],
+  "genre": "Any",
+  "processing_requests": false,
+  "next_request": 0
+}

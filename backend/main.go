@@ -23,7 +23,8 @@ func main() {
 
 	mux := http.NewServeMux()
 	registerHandlers(mux)
-
+	rooms = room.LoadExistingRoomsFromDatabase("../database")
 	log.Println("MusicJam listening on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
+
 }

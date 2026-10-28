@@ -2,45 +2,21 @@ package room
 
 import (
 	crand "crypto/rand"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"math/rand/v2"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
-	"unicode/utf8"
+	"sync"
 )
 
 // Allowed characters for room codes
 const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-// Longest name (in characters) a member can pick
-const MaxNameLength = 30
-
-var (
-	ErrNameRequired   = errors.New("please enter a name")
-	ErrNameTooLong    = fmt.Errorf("name can be at most %d characters", MaxNameLength)
-	ErrMemberNotFound = errors.New("member not found")
-	ErrRemoveHost     = errors.New("the host can't be removed")
-)
-
-// Song in a room's queue
-type Song struct {
-	ID      string `json:"id"`
-	VideoID string `json:"videoId"`
-	Title   string `json:"title"`
-	Channel string `json:"channel"`
-}
-
-// Member of a room. UserID is the secret from the userId cookie, so it is never sent to clients.
-// Clients point at a member with the public ID instead, e.g. when the host removes them.
-type Member struct {
-	ID     string `json:"id"`
-	UserID string `json:"-"`
-	Name   string `json:"name"`
-	IsHost bool   `json:"isHost"`
-}
-
 type Room struct {
+	mutex              sync.RWMutex
 	roomCode           string
 	hostID             string
 	members            map[string]Member // key: user ID
@@ -51,6 +27,31 @@ type Room struct {
 	nextRequest        int
 }
 
+// Constructor for Room that assignes a new room code.
+// codeTaken reports whether a code is already in use, so the new code is unique.
+func NewRoom(hostUserID, hostName string, codeTaken func(string) bool) *Room {
+	code := GenerateRandomRoomNo(6)
+	for codeTaken(code) {
+		code = GenerateRandomRoomNo(6)
+	}
+	room := &Room{
+		roomCode: code,
+		hostID:   hostUserID,
+		members:  map[string]Member{},
+		Queue:    []Song{},
+		Genre:    "Any",
+		Requests: []*SongRequest{},
+	}
+	room.AddMember(hostUserID, hostName)
+	saveToJsonFile(room)
+	return room
+}
+
+// Code is a getter to make the roomcode inaccessible from the outside
+func (room *Room) Code() string {
+	return room.roomCode
+}
+
 // AddMember adds a user to the room, or renames them if they already joined
 func (room *Room) AddMember(userID, name string) Member {
 	m, ok := room.members[userID]
@@ -59,6 +60,7 @@ func (room *Room) AddMember(userID, name string) Member {
 	}
 	m.Name = name
 	room.members[userID] = m
+	saveToJsonFile(room)
 	return m
 }
 
@@ -73,6 +75,7 @@ func (room *Room) RemoveMember(memberID string) (Member, error) {
 			return Member{}, ErrRemoveHost
 		}
 		delete(room.members, userID)
+		saveToJsonFile(room)
 		return m, nil
 	}
 	return Member{}, ErrMemberNotFound
@@ -97,40 +100,13 @@ func (room *Room) IsHost(userID string) bool {
 	return room.hostID == userID
 }
 
-// CleanName trims the spaces around a member name and checks that it is valid
-func CleanName(name string) (string, error) {
-	name = strings.TrimSpace(name)
-	if name == "" {
-		return "", ErrNameRequired
+// GenerateRandomRoomNo generates a random code of the given length (math/rand/v2 is safe for concurrent use)
+func GenerateRandomRoomNo(length int) string {
+	byteArr := make([]byte, length)
+	for i := range byteArr {
+		byteArr[i] = charset[rand.IntN(len(charset))]
 	}
-	if utf8.RuneCountInString(name) > MaxNameLength {
-		return "", ErrNameTooLong
-	}
-	return name, nil
-}
-
-// Constructor for Room that assignes a new room code.
-// codeTaken reports whether a code is already in use, so the new code is unique.
-func NewRoom(hostUserID, hostName string, codeTaken func(string) bool) *Room {
-	code := GenerateRandomRoomNo(6)
-	for codeTaken(code) {
-		code = GenerateRandomRoomNo(6)
-	}
-	room := &Room{
-		roomCode: code,
-		hostID:   hostUserID,
-		members:  map[string]Member{},
-		Queue:    []Song{},
-		Genre:    "Any",
-		Requests: []*SongRequest{},
-	}
-	room.AddMember(hostUserID, hostName)
-	return room
-}
-
-// geter to make the roomcode inaccessable form the outside
-func (room *Room) Code() string {
-	return room.roomCode
+	return string(byteArr)
 }
 
 // String formats the room for the terminal, host first, then members by name
@@ -160,11 +136,85 @@ func (room *Room) String() string {
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
-// Generate a random code of the given length (math/rand/v2 is safe for concurrent use)
-func GenerateRandomRoomNo(length int) string {
-	byteArr := make([]byte, length)
-	for i := range byteArr {
-		byteArr[i] = charset[rand.IntN(len(charset))]
+type roomJSON struct {
+	RoomCode           string            `json:"room_code"`
+	HostID             string            `json:"host_id"`
+	Members            map[string]Member `json:"members"`
+	Queue              []Song            `json:"queue"`
+	Genre              string            `json:"genre"`
+	ProcessingRequests bool              `json:"processing_requests"`
+	NextRequest        int               `json:"next_request"`
+}
+
+func saveToJsonFile(room *Room) {
+	room.mutex.Lock() // Restrict other goroutines from modifying the room while saving the data
+	roomData := roomJSON{
+		RoomCode:           room.roomCode,
+		HostID:             room.hostID,
+		Members:            room.members,
+		Queue:              room.Queue,
+		Genre:              room.Genre,
+		ProcessingRequests: room.ProcessingRequests,
+		NextRequest:        room.nextRequest,
 	}
-	return string(byteArr)
+	room.mutex.Unlock()
+	filename := "../database/room_" + room.roomCode + ".json"
+	tmpfilename := "../database/room_" + room.roomCode + ".json.tmp"
+	fileData, err := json.MarshalIndent(roomData, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshalling room data:", err)
+		return
+	}
+	// Write to temp file then rename so we prenent data loss
+	os.WriteFile(tmpfilename, fileData, 0644)
+	os.Rename(tmpfilename, filename)
+}
+
+func LoadExistingRoomsFromDatabase(dbDir string) map[string]*Room {
+	activeRooms := make(map[string]*Room)
+
+	// Read all files in the database directory
+	entries, err := os.ReadDir(dbDir)
+	if err != nil {
+		// If the directory doesn't exist yet, it's fine (no rooms to load)
+		if os.IsNotExist(err) {
+			return activeRooms
+		}
+		return nil
+	}
+
+	for _, entry := range entries {
+		// Look for JSON files
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+
+		filePath := filepath.Join(dbDir, entry.Name())
+		fileData, err := os.ReadFile(filePath)
+		if err != nil {
+			continue // skip files that fail to read
+		}
+
+		// Unmarshal into your JSON representation struct
+		var data roomJSON
+		if err := json.Unmarshal(fileData, &data); err != nil {
+			continue // skip corrupted files
+		}
+
+		// Reconstruct the Room struct
+		room := &Room{
+			roomCode:           data.RoomCode,
+			hostID:             data.HostID,
+			members:            data.Members,
+			Queue:              data.Queue,
+			Genre:              data.Genre,
+			ProcessingRequests: data.ProcessingRequests,
+			nextRequest:        data.NextRequest,
+		}
+
+		// Store it in  active rooms map using the room code as key
+		activeRooms[room.roomCode] = room
+	}
+
+	return activeRooms
 }
