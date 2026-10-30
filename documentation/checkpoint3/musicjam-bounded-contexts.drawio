@@ -1,0 +1,188 @@
+<mxfile host="app.diagrams.net" pages="2">
+  <diagram id="musicjam-bounded-contexts" name="MusicJam · Context Map · Checkpoint 3">
+    <mxGraphModel dx="2830" dy="1912" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1620" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="FAJcwAyXptJ0ELZC2578-1" parent="1" style="rounded=1;arcSize=3;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="610" width="486" x="540" y="24" as="geometry" />
+        </mxCell>
+        <mxCell id="V0j3VQXDMYbnZUwCau5i-3" parent="1" style="rounded=1;arcSize=3;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="426" width="1056" x="540" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="V0j3VQXDMYbnZUwCau5i-2" parent="1" style="rounded=1;arcSize=3;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="610" width="552" x="1044" y="24" as="geometry" />
+        </mxCell>
+        <mxCell id="V0j3VQXDMYbnZUwCau5i-1" parent="1" style="rounded=1;arcSize=3;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="1052" width="500" x="24" y="24" as="geometry" />
+        </mxCell>
+        <mxCell id="catalog" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=22;fontFamily=Segoe UI;fontSize=17;fontColor=#203047;strokeWidth=1.5;fillColor=#fff4e6;strokeColor=#c27a25;" value="&lt;b&gt;&lt;font style=&quot;font-size:20px&quot;&gt;Search Catalog&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;Search query and results&lt;br&gt;Verified video metadata&lt;br&gt;Translate YouTube data" vertex="1">
+          <mxGeometry height="200" width="420" x="64" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="moderation" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=22;fontFamily=Segoe UI;fontSize=17;fontColor=#203047;strokeWidth=1.5;fillColor=#eef7eb;strokeColor=#66945e;" value="&lt;b&gt;&lt;font style=&quot;font-size:20px&quot;&gt;Moderation&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;Assess genre fit using text metadata&lt;br&gt;allow | review | block + reason&lt;br&gt;No direct queue changes" vertex="1">
+          <mxGeometry height="200" width="440" x="1116" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="core" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=22;fontFamily=Segoe UI;fontSize=17;fontColor=#203047;strokeWidth=1.5;fillColor=#eef4ff;strokeColor=#5d83ba;" value="&lt;b&gt;&lt;font style=&quot;font-size:20px&quot;&gt;Jam Session Core&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;Room · Member · Genre&lt;br&gt;SongRequest · ordered queue&lt;br&gt;Host permissions and admission rules" vertex="1">
+          <mxGeometry height="210" width="440" x="580" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="youtube" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=22;fontFamily=Segoe UI;fontSize=17;fontColor=#203047;strokeWidth=1.5;fillColor=#fff4e6;strokeColor=#c27a25;" value="&lt;b&gt;&lt;font style=&quot;font-size:20px&quot;&gt;YouTube Data API&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;External system&lt;br&gt;Search and video metadata" vertex="1">
+          <mxGeometry height="150" width="420" x="64" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="ollama" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=22;fontFamily=Segoe UI;fontSize=17;fontColor=#203047;strokeWidth=1.5;fillColor=#eef7eb;strokeColor=#66945e;" value="&lt;b&gt;&lt;font style=&quot;font-size:20px&quot;&gt;Ollama / Local Model&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;External system&lt;br&gt;Structured classification" vertex="1">
+          <mxGeometry height="150" width="440" x="1116" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="player" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=22;fontFamily=Segoe UI;fontSize=17;fontColor=#203047;strokeWidth=1.5;fillColor=#f5eef9;strokeColor=#9370ac;" value="&lt;b&gt;&lt;font style=&quot;font-size:20px&quot;&gt;Integrated YouTube Player&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;Playback on the host device only&lt;br&gt;Current queue entry&lt;br&gt;Report playback end using songId" vertex="1">
+          <mxGeometry height="210" width="440" x="580" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="iframe" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=22;fontFamily=Segoe UI;fontSize=17;fontColor=#203047;strokeWidth=1.5;fillColor=#f5eef9;strokeColor=#9370ac;" value="&lt;b&gt;&lt;font style=&quot;font-size:20px&quot;&gt;YouTube IFrame Player API&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;External system&lt;br&gt;Load and play video&lt;br&gt;Provide playback events" vertex="1">
+          <mxGeometry height="210" width="440" x="1116" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-0" edge="1" parent="1" source="core" style="edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.0;exitY=0.5;entryX=1.0;entryY=0.5;startArrow=block;startFill=1;" target="catalog">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="508" y="485" />
+              <mxPoint x="508" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-0" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=15;fontColor=#405167;fillColor=#ffffff;strokeColor=none;spacing=6;" value="Search / results&#xA;Video ID / metadata" vertex="1">
+          <mxGeometry height="60" width="180" x="410" y="312" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-1" edge="1" parent="1" source="core" style="edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#53657a;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;startArrow=block;startFill=1;" target="moderation">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1068" y="485" />
+              <mxPoint x="1068" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-1" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=15;fontColor=#405167;fillColor=#ffffff;strokeColor=none;spacing=6;" value="Song metadata + genre&#xA;Decision + reason" vertex="1">
+          <mxGeometry height="60" width="230" x="953" y="312" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-2" edge="1" parent="1" source="catalog" style="edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;" target="youtube">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-2" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=15;fontColor=#405167;fillColor=#ffffff;strokeColor=none;spacing=6;" value="Search / videos.list" vertex="1">
+          <mxGeometry height="36" width="202" x="173" y="348" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-3" edge="1" parent="1" source="moderation" style="edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;" target="ollama">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-3" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=15;fontColor=#405167;fillColor=#ffffff;strokeColor=none;spacing=6;" value="JSON request / response" vertex="1">
+          <mxGeometry height="36" width="248" x="1212" y="348" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-4" edge="1" parent="1" source="player" style="edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=0.0;entryX=0.5;entryY=1.0;startArrow=block;startFill=1;" target="core">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-4" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=15;fontColor=#405167;fillColor=#ffffff;strokeColor=none;spacing=6;" value="Read queue&#xA;Report playback end" vertex="1">
+          <mxGeometry height="60" width="240" x="680" y="687" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-5" edge="1" parent="1" source="player" style="edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#53657a;exitX=1.0;exitY=0.23809523809523808;entryX=0.5;entryY=0.0;startArrow=block;startFill=1;" target="iframe">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1068" y="870" />
+              <mxPoint x="1068" y="760" />
+              <mxPoint x="1336" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-5" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=15;fontColor=#405167;fillColor=#ffffff;strokeColor=none;spacing=6;" value="Controls / events" vertex="1">
+          <mxGeometry height="36" width="159" x="1130" y="742" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="YzkIjs6q623VUmxWpxkW" name="Seite-2">
+    <mxGraphModel dx="2335" dy="2747" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=18;fontSize=17;fillColor=#e8f7f0;strokeColor=#16805d;" value="Search Catalog&#xA;&#xA;Search query and results&#xA;Verified video metadata&#xA;Translate YouTube data" vertex="1">
+          <mxGeometry height="190" width="380" x="136" y="-118" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-2" parent="1" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=18;fontSize=17;fillColor=#f4edff;strokeColor=#8054bf;" value="Moderation&#xA;&#xA;Assess genre fit using text metadata&#xA;allow | review | block + reason&#xA;No direct queue changes" vertex="1">
+          <mxGeometry height="190" width="380" x="1136" y="-118" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-3" parent="1" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=18;fontSize=17;fillColor=#eaf2ff;strokeColor=#2563eb;" value="Jam Session Core&#xA;&#xA;Room · Member · Genre&#xA;SongRequest · ordered queue&#xA;Host permissions and admission rules" vertex="1">
+          <mxGeometry height="210" width="380" x="636" y="142" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-4" parent="1" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=18;fontSize=17;fillColor=#f1f5f9;strokeColor=#64748b;" value="YouTube Data API&#xA;&#xA;External system&#xA;Search and video metadata" vertex="1">
+          <mxGeometry height="150" width="380" x="136" y="182" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-5" parent="1" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=18;fontSize=17;fillColor=#f1f5f9;strokeColor=#64748b;" value="Ollama / Local Model&#xA;&#xA;External system&#xA;Structured classification" vertex="1">
+          <mxGeometry height="150" width="380" x="1136" y="182" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-6" parent="1" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=18;fontSize=17;fillColor=#fff3e1;strokeColor=#b77714;" value="Integrated YouTube Player&#xA;&#xA;Playback on the host device only&#xA;Current queue entry&#xA;Report playback end using songId" vertex="1">
+          <mxGeometry height="190" width="380" x="636" y="512" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-7" parent="1" style="rounded=1;whiteSpace=wrap;html=0;align=left;verticalAlign=top;spacing=18;fontSize=17;fillColor=#f1f5f9;strokeColor=#64748b;" value="YouTube IFrame Player API&#xA;&#xA;External system&#xA;Load and play video&#xA;Provide playback events" vertex="1">
+          <mxGeometry height="190" width="380" x="1136" y="512" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-8" edge="1" parent="1" source="Ngu_veuq7JkicmYEWBxf-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#475569;exitX=0.0;exitY=0.2857142857142857;entryX=1.0;entryY=0.5;startArrow=block;" target="Ngu_veuq7JkicmYEWBxf-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="576" y="202" />
+              <mxPoint x="576" y="-23" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-9" parent="1" style="text;html=0;align=center;fontSize=15;fillColor=#ffffff;" value="Search / results&#xA;Video ID / metadata" vertex="1">
+          <mxGeometry height="54" width="280" x="436" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-10" edge="1" parent="1" source="Ngu_veuq7JkicmYEWBxf-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#475569;exitX=1.0;exitY=0.2857142857142857;entryX=0.0;entryY=0.5;startArrow=block;" target="Ngu_veuq7JkicmYEWBxf-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1076" y="202" />
+              <mxPoint x="1076" y="-23" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-11" parent="1" style="text;html=0;align=center;fontSize=15;fillColor=#ffffff;" value="Song metadata + genre&#xA;Decision + reason" vertex="1">
+          <mxGeometry height="54" width="280" x="936" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-12" edge="1" parent="1" source="Ngu_veuq7JkicmYEWBxf-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#475569;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;" target="Ngu_veuq7JkicmYEWBxf-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-13" parent="1" style="text;html=0;align=center;fontSize=15;fillColor=#ffffff;" value="Search / videos.list" vertex="1">
+          <mxGeometry height="54" width="280" x="186" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-14" edge="1" parent="1" source="Ngu_veuq7JkicmYEWBxf-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#475569;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;" target="Ngu_veuq7JkicmYEWBxf-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-15" parent="1" style="text;html=0;align=center;fontSize=15;fillColor=#ffffff;" value="JSON request / response" vertex="1">
+          <mxGeometry height="54" width="280" x="1186" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-16" edge="1" parent="1" source="Ngu_veuq7JkicmYEWBxf-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#475569;exitX=0.5;exitY=0.0;entryX=0.5;entryY=1.0;startArrow=block;" target="Ngu_veuq7JkicmYEWBxf-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-17" parent="1" style="text;html=0;align=center;fontSize=15;fillColor=#ffffff;" value="Read queue&#xA;Report playback end" vertex="1">
+          <mxGeometry height="54" width="280" x="686" y="408" as="geometry" />
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-18" edge="1" parent="1" source="Ngu_veuq7JkicmYEWBxf-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#475569;exitX=1.0;exitY=0.2631578947368421;entryX=0.5;entryY=0.0;startArrow=block;" target="Ngu_veuq7JkicmYEWBxf-7">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1076" y="562" />
+              <mxPoint x="1076" y="452" />
+              <mxPoint x="1326" y="452" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ngu_veuq7JkicmYEWBxf-19" parent="1" style="text;html=0;align=center;fontSize=15;fillColor=#ffffff;" value="Controls / events" vertex="1">
+          <mxGeometry height="54" width="280" x="1086" y="428" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,27 @@
+{
+  "room_code": "A200SP",
+  "host_id": "RVUEYOCJQVHERDC4OSRJNMUU2V",
+  "members": {
+    "NRQFSD7BDVTGK5JUA4AQ7XKEIF": {
+      "id": "NHKEBX6IJIDVTGKPQNVYM64H7N",
+      "name": "Host",
+      "isHost": false
+    },
+    "RVUEYOCJQVHERDC4OSRJNMUU2V": {
+      "id": "TDCPSRKXH2GJJDWAMZMHYN4QVY",
+      "name": "Dawg",
+      "isHost": true
+    }
+  },
+  "queue": [
+    {
+      "id": "7EUMU7BEUPKBMLN2T5TG4MLWFE",
+      "videoId": "uu7j_xljCRY",
+      "title": "John Denver - Take Me Home, Country Roads (Lyrics)",
+      "channel": "7clouds"
+    }
+  ],
+  "genre": "Country",
+  "processing_requests": false,
+  "next_request": 1
+}
