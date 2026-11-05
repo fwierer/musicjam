@@ -10,3 +10,7 @@ database/*.json
 database/*.tmp
 database/*.corrupt
 backend/data/
+
+# Local environment variables (contains secret API keys)
+.env
+

@@ -1,6 +1,5 @@
 const rawCode = new URLSearchParams(location.search).get("code") ?? "";
 const code = rawCode.length === 36 ? rawCode.toLowerCase() : rawCode.toUpperCase();
-document.getElementById("room-code").textContent = code;
 
 let poll;
 let refreshing = false;
@@ -17,7 +16,7 @@ async function init() {
   const session = await loadSessionWithRetry(2);
   if (!session) {
     if (!location.pathname.endsWith("/offline.html")) {
-      location.href = "/?join=" + encodeURIComponent(code);
+      location.href = "/join.html?code=" + encodeURIComponent(code);
     }
     return;
   }
@@ -26,14 +25,17 @@ async function init() {
     session.roomId === code ||
     session.id === code;
   if (!matchesRoom) {
-    location.href = "/?join=" + encodeURIComponent(code);
+    location.href = "/join.html?code=" + encodeURIComponent(code);
     return;
-  }
-  if (session.roomCode) {
-    document.getElementById("room-code").textContent = session.roomCode;
   }
   showGenre(session.genre);
   showRoomName(session.roomName);
+
+  const joinOrigin = session.joinOrigin || location.origin;
+  const joinUrl = joinOrigin + "/join.html?code=" + encodeURIComponent(code);
+  document.getElementById("join-url").textContent = joinUrl;
+  new QRCode(document.getElementById("qr-code"), { text: joinUrl, width: 200, height: 200 });
+
   await refresh();
   poll = setInterval(refresh, 3000);
 }

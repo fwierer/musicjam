@@ -4,16 +4,12 @@ import (
 	crand "crypto/rand"
 	"encoding/json"
 	"fmt"
-	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
 )
-
-// Allowed characters for room codes
-const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 type Room struct {
 	mutex              sync.RWMutex
@@ -30,9 +26,9 @@ type Room struct {
 // Constructor for Room that assignes a new room code.
 // codeTaken reports whether a code is already in use, so the new code is unique.
 func NewRoom(hostUserID, hostName string, codeTaken func(string) bool) *Room {
-	code := GenerateRandomRoomNo(6)
+	code := generateUUID()
 	for codeTaken(code) {
-		code = GenerateRandomRoomNo(6)
+		code = generateUUID()
 	}
 	room := &Room{
 		roomCode: code,
@@ -56,7 +52,7 @@ func (room *Room) Code() string {
 func (room *Room) AddMember(userID, name string) Member {
 	m, ok := room.members[userID]
 	if !ok {
-		m = Member{ID: crand.Text(), UserID: userID, IsHost: room.IsHost(userID)}
+		m = Member{ID: generateUUID(), UserID: userID, IsHost: room.IsHost(userID)}
 	}
 	m.Name = name
 	room.members[userID] = m
@@ -100,13 +96,12 @@ func (room *Room) IsHost(userID string) bool {
 	return room.hostID == userID
 }
 
-// GenerateRandomRoomNo generates a random code of the given length (math/rand/v2 is safe for concurrent use)
-func GenerateRandomRoomNo(length int) string {
-	byteArr := make([]byte, length)
-	for i := range byteArr {
-		byteArr[i] = charset[rand.IntN(len(charset))]
-	}
-	return string(byteArr)
+func generateUUID() string {
+	var b [16]byte
+	crand.Read(b[:])
+	b[6] = (b[6] & 0x0f) | 0x40
+	b[8] = (b[8] & 0x3f) | 0x80
+	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
 }
 
 // String formats the room for the terminal, host first, then members by name

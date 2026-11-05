@@ -57,9 +57,8 @@ async function init() {
   // the QR code connect to the host's LAN IP instead of their own localhost.
   const joinOrigin = session.joinOrigin || location.origin;
   const joinTarget = session.roomId || session.id || code;
-  const joinUrl = joinOrigin + "/?join=" + encodeURIComponent(joinTarget);
+  const joinUrl = joinOrigin + "/join.html?code=" + encodeURIComponent(joinTarget);
 
-  document.getElementById("room-code").textContent = code;
   document.getElementById("join-url").textContent = joinUrl;
 
   const localhostWarning = document.getElementById("localhost-warning");

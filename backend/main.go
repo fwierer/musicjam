@@ -4,6 +4,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,6 +24,7 @@ type Session struct {
 }
 
 func main() {
+	loadEnv()
 
 	mux := http.NewServeMux()
 	registerHandlers(mux)
@@ -53,3 +56,14 @@ func GetLocalIP() net.IP {
 	localAddress := conn.LocalAddr().(*net.UDPAddr)
 	return localAddress.IP
 }
+
+func loadEnv() {
+	data, _ := os.ReadFile("../.env")
+	for _, line := range strings.Split(string(data), "\n") {
+		if k, v, ok := strings.Cut(strings.TrimSpace(line), "="); ok && k != "" && !strings.HasPrefix(k, "#") {
+			os.Setenv(k, v)
+		}
+	}
+}
+
+

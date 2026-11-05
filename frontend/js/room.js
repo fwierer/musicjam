@@ -1,7 +1,6 @@
 // Start page: host a jam or join one. Both need a name, the server keeps it in the session.
 const nameInput = document.getElementById("user-name");
 const roomNameInput = document.getElementById("room-name");
-const joinCodeInput = document.getElementById("join-code");
 const genreInput = document.getElementById("genre-input");
 const startJam = document.getElementById("start-jam");
 
@@ -34,11 +33,10 @@ fetchWithTimeout("/api/genres", {}, DEFAULT_TIMEOUT_MS)
     showError("start-error", "Could not load genres. Please reload.");
   });
 
-// The QR code on the host screen opens /?join=CODE_OR_UUID, so only the name is left to fill in
+// If opened with /?join=UUID, redirect to the dedicated join page
 const joinParam = new URLSearchParams(location.search).get("join");
 if (joinParam) {
-  joinCodeInput.value = joinParam.length === 36 ? joinParam.toLowerCase() : joinParam.toUpperCase();
-  nameInput.focus();
+  location.replace("/join.html?code=" + encodeURIComponent(joinParam));
 }
 
 document.getElementById("start-jam").addEventListener("click", async () => {
@@ -78,43 +76,6 @@ document.getElementById("start-jam").addEventListener("click", async () => {
     showError("start-error", "Could not start a jam. Please try again.");
   } finally {
     startJam.disabled = false;
-  }
-});
-
-document.getElementById("join-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const name = readName();
-  if (!name) {
-    return;
-  }
-
-  const rawCode = joinCodeInput.value.trim();
-  const code = rawCode.length === 36 ? rawCode.toLowerCase() : rawCode.toUpperCase();
-  try {
-    const response = await fetchWithTimeout(
-      `/api/room/join?code=${encodeURIComponent(code)}&name=${encodeURIComponent(name)}`,
-      { method: "POST" },
-      ACTION_TIMEOUT_MS
-    );
-    if (!response.ok) {
-      showError(
-        "join-error",
-        response.status === 404
-          ? "No jam found with this code."
-          : "Could not join. Please try again."
-      );
-      return;
-    }
-    const data = await response.json().catch(() => ({}));
-    rememberName(name);
-    const targetCode = data.code || data.id || code;
-    location.href = "/guest.html?code=" + encodeURIComponent(targetCode);
-  } catch (error) {
-    if (error instanceof OfflineError) {
-      redirectToOffline(error.isTimeout ? "timeout" : "offline");
-      return;
-    }
-    showError("join-error", "Could not join. Please try again.");
   }
 });
 

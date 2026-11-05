@@ -24,20 +24,15 @@
         One computer plays music from YouTube. Guests join with their phones and pick the songs.
       </p>
 
-      <div class="row mb-4">
+      <div class="row">
         <div class="col-md-6">
-          <label class="form-label" for="user-name">Your name</label>
-          <input class="form-control" id="user-name" type="text" placeholder="e.g. Alex"
-                 maxlength="30" autocomplete="nickname" required>
-        </div>
-      </div>
-
-      <div class="row g-4">
-        <div class="col-md-6">
-          <div class="card h-100">
+          <div class="card">
             <div class="card-body p-4">
               <h2 class="h3">Host a jam</h2>
               <p class="text-body-secondary">This device will play the music. Best on a laptop or PC connected to speakers.</p>
+              <label class="form-label" for="user-name">Your name</label>
+              <input class="form-control mb-3" id="user-name" type="text" placeholder="e.g. Alex"
+                     maxlength="30" autocomplete="nickname" required>
               <label class="form-label" for="room-name">Room name <span class="text-body-secondary small">(optional)</span></label>
               <input class="form-control mb-3" id="room-name" type="text" placeholder="e.g. Friday Night Vibes"
                      maxlength="40" autocomplete="off">
@@ -45,23 +40,6 @@
               <select class="form-select mb-3" id="genre-input"></select>
               <button type="button" class="btn btn-primary w-100" id="start-jam">Start a jam</button>
               <p class="error mt-2 mb-0" id="start-error" hidden>Could not start a jam. Please try again.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="card h-100">
-            <div class="card-body p-4">
-              <h2 class="h3">Join a jam</h2>
-              <form id="join-form">
-                <label class="form-label" for="join-code">Room code</label>
-                <div class="d-flex gap-2">
-                  <input class="form-control code-input" id="join-code" type="text" placeholder="K7MX2P"
-                         maxlength="36" autocomplete="off" required>
-                  <button class="btn btn-outline-primary px-4" type="submit">Join</button>
-                </div>
-              </form>
-              <p class="error mt-2 mb-0" id="join-error" hidden></p>
             </div>
           </div>
         </div>

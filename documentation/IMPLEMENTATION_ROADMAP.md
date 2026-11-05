@@ -11,33 +11,27 @@ This document consolidates all planned fixes and architectural improvements acro
 ### Completed Today
 - [x] **Phase 1 — LAN IP Migration (Done)**:
   - Implemented [`GetLocalIP()`](../backend/main.go#L46-L55) in [`backend/main.go`](../backend/main.go) using UDP dial (`net.Dial("udp", "8.8.8.8:80")`) with `net.IPv4(127, 0, 0, 1)` fallback.
-  - Added `"joinOrigin": "http://" + GetLocalIP().String() + ":8000"` to [`getSession`](../backend/handlers.go#L210-L217) in [`backend/handlers.go`](../backend/handlers.go).
-  - Updated [`frontend/js/host.js`](../frontend/js/host.js#L50-L66) to build the QR code and join URL from `session.joinOrigin`.
+  - Added `"joinOrigin": "http://" + GetLocalIP().String() + ":8000"` to [`getSession`](../backend/handlers.go#L230-L238) in [`backend/handlers.go`](../backend/handlers.go).
+  - Updated [`frontend/js/host.js`](../frontend/js/host.js#L50-L60) to build the QR code and join URL from `session.joinOrigin`.
 - [x] **Phase 2 — Request Timeouts & Connection Error Page (Done)**:
   - Configured `&http.Server{}` with `ReadHeaderTimeout: 5s`, `ReadTimeout: 10s`, `WriteTimeout: 10s` in [`backend/main.go`](../backend/main.go#L31-L37).
   - Created [`frontend/js/api.js`](../frontend/js/api.js) with `fetchWithTimeout()`, `OfflineError`, `loadSessionWithRetry()`, and `setConnectionState()`.
   - Created [`frontend/offline.html`](../frontend/offline.html) and [`frontend/js/offline.js`](../frontend/js/offline.js) with timeout/offline messaging, Wi-Fi checklist, manual retry button, and 5s auto-reconnect loop.
   - Wired request timeouts and connection status pills into [`index.html`](../frontend/index.html), [`room.js`](../frontend/js/room.js), [`host.html`](../frontend/host.html), [`host.js`](../frontend/js/host.js), [`guest.html`](../frontend/guest.html), [`guest.js`](../frontend/js/guest.js), [`members.js`](../frontend/js/members.js), and [`song-search.js`](../frontend/js/song-search.js).
-- [x] **Housekeeping & Frontend Prep for UUIDs / Room Names (Done)**:
-  - Removed unused legacy files (`frontend/session.html`, `frontend/js/youtube-search.js`, `frontend/components/nav.js`).
-  - Updated [`.gitignore`](../.gitignore) to ignore `database/*.json`, `database/*.tmp`, `database/*.corrupt`, and `backend/data/`.
-  - Pre-wired frontend UI (`#room-name` input and badge, 36-char UUID join support) so it is ready for the backend UUID migration.
+- [x] **Task 3 — Worker Panic Recovery (Done)**:
+  - Added `defer func() { if r := recover(); r != nil { ... } }()` at the start of [`processSongRequests`](../backend/handlers_moderation.go#L102-L111) in [`backend/handlers_moderation.go`](../backend/handlers_moderation.go).
+- [x] **Phase 3 (Task 4) — Session & Room Persistence Fixes (Done)**:
+  - Created [`backend/sessions.go`](../backend/sessions.go) (`saveSessions` / `loadSessions` with `../database/sessions.json`) and wired it into [`backend/main.go`](../backend/main.go#L32) and [`backend/handlers.go`](../backend/handlers.go).
+  - Updated [`LoadExistingRoomsFromDatabase`](../backend/room/room.go#L194-L266) in [`backend/room/room.go`](../backend/room/room.go) to only read `room_*.json`, restore `Member.UserID` from the map key, persist `Requests` and `Name`, and save on queue/request updates (`rm.Save()`).
+  - Added 24h `MaxAge` and `SameSiteLaxMode` to the `userId` cookie in [`getUserID`](../backend/handlers.go#L30-L49).
+- [x] **Phase 4 (Task 5) — Pure UUID v4 + QR Code Join Migration (Done)**:
+  - Replaced `math/rand/v2` 6-character room codes with `crypto/rand` RFC 4122 UUID v4 ([`GenerateUUIDv4()`](../backend/room/room.go#L112-L122)) for Room IDs, Member IDs, Song IDs, and User IDs.
+  - Added human-readable Room Names ([`CleanRoomName`](../backend/room/structs.go#L51-L61)) displayed in host and guest headers.
+  - Removed manual room code entry from [`frontend/index.html`](../frontend/index.html), [`frontend/js/room.js`](../frontend/js/room.js), [`frontend/host.html`](../frontend/host.html), [`frontend/js/host.js`](../frontend/js/host.js), [`frontend/guest.html`](../frontend/guest.html), and [`frontend/js/guest.js`](../frontend/js/guest.js) — guests now join exclusively via the QR code / UUID link (`/?join=<uuid>`).
 
-### Still To Do (Where to Resume After Break)
-1. **Task 3 (Go — ~15 mins): Worker Panic Recovery & Graceful Shutdown**
-   - Add `defer func() { if p := recover(); p != nil { ... } }()` at the start of [`processSongRequests`](../backend/handlers_moderation.go#L95) in [`backend/handlers_moderation.go`](../backend/handlers_moderation.go).
-   - *(Optional)* Add `signal.NotifyContext` + `server.Shutdown(ctx)` in [`backend/main.go`](../backend/main.go).
-2. **Task 4 (Go — ~45 mins): Session & Room Persistence Fixes (Phase 3)**
-   - Create `backend/sessions.go` (`saveSessions` / `loadSessions` with `../database/sessions.json`) and call it on room create/join/kick.
-   - Fix [`LoadExistingRoomsFromDatabase`](../backend/room/room.go#L173-L220) in [`backend/room/room.go`](../backend/room/room.go): restore `Member.UserID` from map key, only read `room_*.json`, stop saving `ProcessingRequests`, and save on queue/request updates.
-   - Add `MaxAge: 86400` and `SameSite: http.SameSiteLaxMode` to the `userId` cookie in [`getUserID`](../backend/handlers.go#L31-L41).
-3. **Task 5 (Go — ~45 mins): UUID v4 + Join PIN + Room Name Migration (Phase 4)**
-   - Add `generateUUIDv4()` in [`backend/room/room.go`](../backend/room/room.go), update `Room` struct (`id`, `name`, `joinCode`), and update [`Member.ID`](../backend/room/structs.go#L30-L36).
-   - Add `joinCodes` lookup map (`6-char code -> room UUID`) in [`backend/main.go`](../backend/main.go) / [`backend/handlers.go`](../backend/handlers.go).
-   - *(Outsource after you write the core logic)*: Let AI update the existing `backend/*_test.go` test files for you.
-4. **Task 6 (Phase 5 & 6 — Optional / Later)**:
-   - Refactor globals into `App` struct (`backend/app.go`) & `store` package (`backend/store/`).
-   - Add `DELETE /api/room` so "End session" deletes the room on the server.
+### Optional Future Tasks (Phase 5 & 6)
+- Refactor globals into `App` struct (`backend/app.go`) & `store` package (`backend/store/`).
+- Add `DELETE /api/room` so "End session" deletes the room on the server.
 
 ---
 
