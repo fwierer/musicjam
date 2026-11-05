@@ -207,7 +207,13 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "room not found", http.StatusNotFound)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]any{"name": currentSession.Name, "roomCode": currentSession.RoomCode, "isHost": currentSession.IsHost, "genre": rm.Genre})
+	json.NewEncoder(w).Encode(
+		map[string]any{
+			"name":       currentSession.Name,
+			"roomCode":   currentSession.RoomCode,
+			"isHost":     currentSession.IsHost,
+			"genre":      rm.Genre,
+			"joinOrigin": "http://" + GetLocalIP().String() + ":8000"})
 }
 
 func handleQueue(w http.ResponseWriter, r *http.Request) {

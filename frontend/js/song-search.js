@@ -22,7 +22,11 @@ function initSongSearch(onAdded) {
     status.textContent = "Searching...";
     results.replaceChildren();
     try {
-      const response = await fetch("/api/youtube/search?q=" + encodeURIComponent(query));
+      const response = await fetchWithTimeout(
+        "/api/youtube/search?q=" + encodeURIComponent(query),
+        {},
+        SEARCH_TIMEOUT_MS
+      );
       if (!response.ok) throw new Error("Search failed");
       const songs = await response.json();
       status.textContent = songs.length ? "" : "No songs found.";
@@ -39,17 +43,24 @@ function initSongSearch(onAdded) {
           adding = true;
           button.disabled = true;
           try {
-            const added = await fetch("/api/room/requests", {
-              method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(song),
-            });
+            const added = await fetchWithTimeout(
+              "/api/room/requests",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(song),
+              },
+              ACTION_TIMEOUT_MS
+            );
             if (!added.ok) throw new Error("Request failed");
             const request = await added.json();
             lastRequestId = request.id;
             status.textContent = requestStatus(request) + ".";
             await onAdded();
           } catch (error) {
-            status.textContent = "Could not request song. Please try again.";
+            status.textContent = error.isTimeout
+              ? "Request timed out. Please try again."
+              : "Could not request song. Please try again.";
           } finally {
             adding = false;
             button.disabled = false;
@@ -59,7 +70,9 @@ function initSongSearch(onAdded) {
         results.append(row);
       }
     } catch (error) {
-      status.textContent = "Could not search. Please try again.";
+      status.textContent = error.isTimeout
+        ? "Search timed out. Please try again."
+        : "Could not search. Please try again.";
     } finally {
       searching = false;
     }

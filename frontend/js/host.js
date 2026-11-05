@@ -5,11 +5,14 @@ const memberList = createMemberList(document.getElementById("member-list"), asyn
   try {
     showGuests(await removeRoomMember(member.id));
   } catch (error) {
-    playbackStatus.textContent = `Could not remove ${member.name}. Please try again.`;
+    playbackStatus.textContent = error.isTimeout
+      ? `Removing ${member.name} timed out. Please try again.`
+      : `Could not remove ${member.name}. Please try again.`;
   }
 });
 
 let code;
+let roomId;
 let player;
 let playerReady = false;
 let apiReady = false;
@@ -22,6 +25,7 @@ let refreshing = false;
 let advancing = false;
 let deciding = false;
 let queueVersion = 0;
+let offlineFailures = 0;
 
 const showSearchStatus = initSongSearch(async () => {
   queueVersion++;
@@ -31,19 +35,43 @@ const showSearchStatus = initSongSearch(async () => {
 init();
 
 async function init() {
-  const response = await fetch("/api/session");
-  const session = response.ok ? await response.json() : null;
-  if (!session?.isHost) {
+  const session = await loadSessionWithRetry(2);
+  if (!session) {
+    // Either redirected to offline.html or no active session
+    if (!location.pathname.endsWith("/offline.html")) {
+      location.href = "/";
+    }
+    return;
+  }
+  if (!session.isHost) {
     location.href = "/";
     return;
   }
 
-  code = session.roomCode;
+  code = session.roomCode || session.code;
+  roomId = session.roomId || session.id || code;
   showGenre(session.genre);
-  // Guests land on the start page with the code filled in, since they need to enter a name
-  const joinUrl = location.origin + "/?join=" + code;
+  showRoomName(session.roomName);
+
+  // Use session.joinOrigin (LAN IP from backend) when available so phones scanning
+  // the QR code connect to the host's LAN IP instead of their own localhost.
+  const joinOrigin = session.joinOrigin || location.origin;
+  const joinTarget = session.roomId || session.id || code;
+  const joinUrl = joinOrigin + "/?join=" + encodeURIComponent(joinTarget);
+
   document.getElementById("room-code").textContent = code;
   document.getElementById("join-url").textContent = joinUrl;
+
+  const localhostWarning = document.getElementById("localhost-warning");
+  if (localhostWarning) {
+    const isLoopback = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(joinOrigin);
+    localhostWarning.hidden = !isLoopback;
+    if (isLoopback) {
+      localhostWarning.textContent =
+        "Note: Open this page using your computer's local network IP (e.g. 192.168.x.x) so phones can scan the QR code.";
+    }
+  }
+
   new QRCode(document.getElementById("qr-code"), { text: joinUrl, width: 260, height: 260 });
 
   window.onYouTubeIframeAPIReady = () => {
@@ -63,19 +91,39 @@ async function refresh() {
   refreshing = true;
   const version = queueVersion;
   try {
-    const response = await fetch("/api/room/requests");
+    const response = await fetchWithTimeout("/api/room/requests", {}, DEFAULT_TIMEOUT_MS);
+    offlineFailures = 0;
+    setConnectionState(true);
+    if (playbackStatus.textContent === "Could not refresh queue. Retrying...") {
+      playbackStatus.textContent = "";
+    }
+    if (response.status === 401 || response.status === 404) {
+      playbackStatus.textContent = "This jam is no longer available.";
+      location.href = "/";
+      return;
+    }
     if (!response.ok) throw new Error("Could not load queue.");
     const state = await response.json();
     // Ignore a poll that started before the current song was removed.
     if (version !== queueVersion) return;
     updateQueue(state.queue ?? []);
     showGenre(state.genre);
+    if (state.roomName) showRoomName(state.roomName);
     renderSongRequests(state.requests, decideRequest);
     showSearchStatus(state.requests);
 
-    showGuests(await getRoomMembers(code));
+    showGuests(await getRoomMembers(roomId || code));
   } catch (error) {
-    playbackStatus.textContent = "Could not refresh queue. Retrying...";
+    if (error instanceof OfflineError) {
+      offlineFailures++;
+      setConnectionState(false, error.isTimeout ? "Request timed out — retrying…" : "Reconnecting…");
+      if (offlineFailures >= 4) {
+        redirectToOffline(error.isTimeout ? "timeout" : "offline");
+        return;
+      }
+    } else {
+      playbackStatus.textContent = "Could not refresh queue. Retrying...";
+    }
   } finally {
     refreshing = false;
   }
@@ -86,10 +134,15 @@ async function decideRequest(requestId, decision) {
   queueVersion++;
   const version = queueVersion;
   try {
-    const response = await fetch("/api/room/requests/decision", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId, decision }),
-    });
+    const response = await fetchWithTimeout(
+      "/api/room/requests/decision",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, decision }),
+      },
+      ACTION_TIMEOUT_MS
+    );
     if (!response.ok) throw new Error("Decision failed");
     const state = await response.json();
     if (version === queueVersion) {
@@ -201,17 +254,23 @@ async function advanceQueue() {
   const version = queueVersion;
   let queue;
   try {
-    const response = await fetch("/api/room/queue", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ songId: finishedSongId }),
-    });
+    const response = await fetchWithTimeout(
+      "/api/room/queue",
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ songId: finishedSongId }),
+      },
+      ACTION_TIMEOUT_MS
+    );
     if (!response.ok) throw new Error("Could not advance queue.");
     queue = (await response.json()) ?? [];
     finishedSongId = "";
     playbackStatus.textContent = "";
   } catch (error) {
-    playbackStatus.textContent = "Could not advance queue. Retrying...";
+    playbackStatus.textContent = error.isTimeout
+      ? "Advancing queue timed out. Retrying..."
+      : "Could not advance queue. Retrying...";
   } finally {
     advancing = false;
   }

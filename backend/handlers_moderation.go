@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"log"
 	"net/http"
 	"regexp"
 	"time"
@@ -93,6 +94,15 @@ func submitSong(w http.ResponseWriter, r *http.Request, legacy bool) {
 
 // One worker per room preserves admission order; network calls never hold mu.
 func processSongRequests(rm *room.Room, engine songClassifier, lookup func(context.Context, string) (room.Song, error)) {
+	// improved handling of panics with lock and restart
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("panic in processSongRequests:", r)
+			mu.Lock()
+			rm.ProcessingRequests = false
+			mu.Unlock()
+		}
+	}()
 	for {
 		mu.Lock()
 		var request *room.SongRequest

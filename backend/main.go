@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/FullStackKlerant/musicjam/backend/room"
 )
@@ -24,7 +26,30 @@ func main() {
 	mux := http.NewServeMux()
 	registerHandlers(mux)
 	rooms = room.LoadExistingRoomsFromDatabase("../database")
-	log.Println("MusicJam listening on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	localIp := GetLocalIP()
 
+	server := &http.Server{
+		Addr:              ":8000",
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+	}
+
+	log.Println("MusicJam running on http://" + localIp.String() + ":8000")
+	log.Fatal(server.ListenAndServe())
+
+}
+
+// get local preferred IP address and use it to host backend
+// because of this other devices int the same newtork will be able to connect to the sevice
+func GetLocalIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Println("Unbale to resolve loal IP address" + err.Error())
+		return net.IPv4(127, 0, 0, 1)
+	}
+	defer conn.Close()
+	localAddress := conn.LocalAddr().(*net.UDPAddr)
+	return localAddress.IP
 }

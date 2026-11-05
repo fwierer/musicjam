@@ -2,7 +2,11 @@
 
 // Returns the members of a room, host first
 async function getRoomMembers(code) {
-  const response = await fetch("/api/room/getRoomMembers?code=" + encodeURIComponent(code));
+  const response = await fetchWithTimeout(
+    "/api/room/getRoomMembers?code=" + encodeURIComponent(code),
+    {},
+    DEFAULT_TIMEOUT_MS
+  );
   if (!response.ok) {
     throw new Error(await response.text());
   }
@@ -11,11 +15,15 @@ async function getRoomMembers(code) {
 
 // Kicks a member out of the host's room and returns the members that are left
 async function removeRoomMember(memberId) {
-  const response = await fetch("/api/room/removeRoomMember", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ memberId }),
-  });
+  const response = await fetchWithTimeout(
+    "/api/room/removeRoomMember",
+    {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId }),
+    },
+    ACTION_TIMEOUT_MS
+  );
   if (!response.ok) {
     throw new Error(await response.text());
   }

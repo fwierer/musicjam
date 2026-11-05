@@ -1,9 +1,11 @@
-const code = (new URLSearchParams(location.search).get("code") ?? "").toUpperCase();
+const rawCode = new URLSearchParams(location.search).get("code") ?? "";
+const code = rawCode.length === 36 ? rawCode.toLowerCase() : rawCode.toUpperCase();
 document.getElementById("room-code").textContent = code;
 
 let poll;
 let refreshing = false;
 let queueVersion = 0;
+let offlineFailures = 0;
 
 const showSearchStatus = initSongSearch(async () => {
   queueVersion++;
@@ -12,13 +14,26 @@ const showSearchStatus = initSongSearch(async () => {
 init();
 
 async function init() {
-  const response = await fetch("/api/session");
-  const session = response.ok ? await response.json() : null;
-  if (session?.roomCode !== code) {
+  const session = await loadSessionWithRetry(2);
+  if (!session) {
+    if (!location.pathname.endsWith("/offline.html")) {
+      location.href = "/?join=" + encodeURIComponent(code);
+    }
+    return;
+  }
+  const matchesRoom =
+    session.roomCode === code ||
+    session.roomId === code ||
+    session.id === code;
+  if (!matchesRoom) {
     location.href = "/?join=" + encodeURIComponent(code);
     return;
   }
+  if (session.roomCode) {
+    document.getElementById("room-code").textContent = session.roomCode;
+  }
   showGenre(session.genre);
+  showRoomName(session.roomName);
   await refresh();
   poll = setInterval(refresh, 3000);
 }
@@ -27,8 +42,14 @@ async function refresh() {
   if (refreshing) return;
   refreshing = true;
   const version = queueVersion;
+  const searchStatus = document.getElementById("search-status");
   try {
-    const response = await fetch("/api/room/requests");
+    const response = await fetchWithTimeout("/api/room/requests", {}, DEFAULT_TIMEOUT_MS);
+    offlineFailures = 0;
+    setConnectionState(true);
+    if (searchStatus.textContent === "Could not refresh queue. Retrying...") {
+      searchStatus.textContent = "";
+    }
     if (response.status === 401 || response.status === 404) {
       showEnded();
       return;
@@ -38,10 +59,21 @@ async function refresh() {
     if (version !== queueVersion) return;
     updateQueue(state.queue ?? []);
     showGenre(state.genre);
+    if (state.roomName) showRoomName(state.roomName);
     renderSongRequests(state.requests);
     showSearchStatus(state.requests);
   } catch (error) {
-    document.getElementById("search-status").textContent = "Could not refresh queue. Retrying...";
+    if (error instanceof OfflineError) {
+      offlineFailures++;
+      setConnectionState(false, error.isTimeout ? "Timed out…" : "Reconnecting…");
+      if (offlineFailures >= 4) {
+        clearInterval(poll);
+        redirectToOffline(error.isTimeout ? "timeout" : "offline");
+        return;
+      }
+    } else {
+      searchStatus.textContent = "Could not refresh queue. Retrying...";
+    }
   } finally {
     refreshing = false;
   }

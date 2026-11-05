@@ -4,3 +4,9 @@ LEARNING_NOTES.md
 .gocache/
 backend/backend
 *.exe
+
+# Runtime room & session persistence files (contain secret userId cookies)
+database/*.json
+database/*.tmp
+database/*.corrupt
+backend/data/

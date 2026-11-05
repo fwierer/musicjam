@@ -27,6 +27,7 @@ type Song struct {
 
 // Member of a room. UserID is the secret from the userId cookie, so it is never sent to clients.
 // Clients point at a member with the public ID instead, e.g. when the host removes them.
+// change to UID
 type Member struct {
 	ID     string `json:"id"`
 	UserID string `json:"-"`

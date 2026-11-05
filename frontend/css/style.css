@@ -133,6 +133,10 @@ header {
   background: var(--accent);
 }
 
+.dot.offline {
+  background: var(--bs-secondary-color);
+}
+
 .error {
   color: #FFB4A8;
 }

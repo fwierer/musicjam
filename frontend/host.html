@@ -16,7 +16,9 @@
           Music Jam
         </a>
         <span class="pill">You are the host</span>
+        <span class="pill" id="room-name" hidden></span>
         <span class="pill" id="room-genre"></span>
+        <span class="pill" id="connection-pill" hidden><span class="dot offline"></span><span id="connection-status">Reconnecting…</span></span>
         <div class="ms-auto d-flex align-items-center gap-3">
           <span class="d-flex align-items-center gap-2 text-body-secondary">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -70,6 +72,7 @@
               <p class="text-body-secondary mt-3 mb-1">or enter the room code</p>
               <p class="room-code mb-2" id="room-code"></p>
               <p class="text-body-secondary small mb-0" id="join-url"></p>
+              <p class="error small mt-2 mb-0" id="localhost-warning" hidden></p>
             </div>
           </div>
           <section class="mt-4" aria-labelledby="queue-heading">
@@ -90,10 +93,11 @@
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="/js/api.js?v=1"></script>
     <script src="/js/queue.js?v=1"></script>
-    <script src="/js/members.js?v=1"></script>
+    <script src="/js/members.js?v=2"></script>
     <script src="/js/moderation.js?v=1"></script>
-    <script src="/js/song-search.js?v=1"></script>
-    <script src="/js/host.js?v=genre-1"></script>
+    <script src="/js/song-search.js?v=2"></script>
+    <script src="/js/host.js?v=genre-2"></script>
   </body>
 </html>
