@@ -7,14 +7,18 @@ import (
 	"unicode/utf8"
 )
 
-// Longest name (in characters) a member can pick
-const MaxNameLength = 30
+// Longest name (in characters) a member or room can pick
+const (
+	MaxNameLength     = 30
+	MaxRoomNameLength = 40
+)
 
 var (
-	ErrNameRequired   = errors.New("please enter a name")
-	ErrNameTooLong    = fmt.Errorf("name can be at most %d characters", MaxNameLength)
-	ErrMemberNotFound = errors.New("member not found")
-	ErrRemoveHost     = errors.New("the host can't be removed")
+	ErrNameRequired     = errors.New("please enter a name")
+	ErrNameTooLong      = fmt.Errorf("name can be at most %d characters", MaxNameLength)
+	ErrRoomNameTooLong  = fmt.Errorf("room name can be at most %d characters", MaxRoomNameLength)
+	ErrMemberNotFound   = errors.New("member not found")
+	ErrRemoveHost       = errors.New("the host can't be removed")
 )
 
 // Song in a room's queue
@@ -27,7 +31,6 @@ type Song struct {
 
 // Member of a room. UserID is the secret from the userId cookie, so it is never sent to clients.
 // Clients point at a member with the public ID instead, e.g. when the host removes them.
-// change to UID
 type Member struct {
 	ID     string `json:"id"`
 	UserID string `json:"-"`
@@ -45,4 +48,16 @@ func CleanName(name string) (string, error) {
 		return "", ErrNameTooLong
 	}
 	return name, nil
+}
+
+// CleanRoomName trims spaces around an optional room name, defaulting to "{hostName}'s Jam"
+func CleanRoomName(roomName, hostName string) (string, error) {
+	roomName = strings.TrimSpace(roomName)
+	if roomName == "" {
+		return hostName + "'s Jam", nil
+	}
+	if utf8.RuneCountInString(roomName) > MaxRoomNameLength {
+		return "", ErrRoomNameTooLong
+	}
+	return roomName, nil
 }

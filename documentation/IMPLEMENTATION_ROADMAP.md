@@ -21,9 +21,10 @@ This document consolidates all planned fixes and architectural improvements acro
 - [x] **Task 3 — Worker Panic Recovery (Done)**:
   - Added `defer func() { if r := recover(); r != nil { ... } }()` at the start of [`processSongRequests`](../backend/handlers_moderation.go#L102-L111) in [`backend/handlers_moderation.go`](../backend/handlers_moderation.go).
 - [x] **Phase 3 (Task 4) — Session & Room Persistence Fixes (Done)**:
-  - Created [`backend/sessions.go`](../backend/sessions.go) (`saveSessions` / `loadSessions` with `../database/sessions.json`) and wired it into [`backend/main.go`](../backend/main.go#L32) and [`backend/handlers.go`](../backend/handlers.go).
-  - Updated [`LoadExistingRoomsFromDatabase`](../backend/room/room.go#L194-L266) in [`backend/room/room.go`](../backend/room/room.go) to only read `room_*.json`, restore `Member.UserID` from the map key, persist `Requests` and `Name`, and save on queue/request updates (`rm.Save()`).
-  - Added 24h `MaxAge` and `SameSiteLaxMode` to the `userId` cookie in [`getUserID`](../backend/handlers.go#L30-L49).
+  - Each room saves its own `database/room_<uuid>.json` file containing its `members`, `queue`, `requests`, `genre`, and `name` via [`saveToJsonFile`](../backend/room/room.go#L172-L204) / [`rm.Save()`](../backend/room/room.go#L72-L74).
+  - Updated [`LoadExistingRoomsFromDatabase`](../backend/room/room.go#L206-L283) in [`backend/room/room.go`](../backend/room/room.go) to only read `room_*.json`, restore `Member.UserID` from the map key, and persist `Requests` and `Name`.
+  - Added [`loadSessionsFromRooms`](../backend/main.go#L51-L82) in [`backend/main.go`](../backend/main.go) to rebuild user sessions directly from the `members` stored in each room's JSON file at startup.
+  - Added 24h `MaxAge` and `SameSiteLaxMode` to the `userId` cookie in [`getUserID`](../backend/handlers.go#L32-L51).
 - [x] **Phase 4 (Task 5) — Pure UUID v4 + QR Code Join Migration (Done)**:
   - Replaced `math/rand/v2` 6-character room codes with `crypto/rand` RFC 4122 UUID v4 ([`GenerateUUIDv4()`](../backend/room/room.go#L112-L122)) for Room IDs, Member IDs, Song IDs, and User IDs.
   - Added human-readable Room Names ([`CleanRoomName`](../backend/room/structs.go#L51-L61)) displayed in host and guest headers.

@@ -38,15 +38,17 @@ Music Jam is a shared listening app for parties and get-togethers. One **host** 
 
 ## Currently implemented
 
-- **Hosting sessions:** the host creates a room with a random code and gets a QR code that links to the join page
-- **Joining a session:** guests join by scanning the QR code or typing the room code. A cookie identifies each user
+- **Hosting sessions:** the host creates a room (identified by a cryptographic UUID v4 and an optional room name) and gets a QR code linking to the join page on the host's LAN IP (`http://<LAN_IP>:8000`)
+- **Joining a session:** guests join by scanning the QR code or opening the join link (`/join.html?code=<uuid>`). A 24-hour `HttpOnly` cookie identifies each user
+- **Per-room JSON persistence:** each room saves its state (`members`, `queue`, `requests`, `genre`, `name`) to `database/room_<uuid>.json` so active rooms and member sessions survive server restarts
+- **Offline & timeout handling:** frontend requests enforce explicit timeouts (`frontend/js/api.js`) with an automatic reconnection indicator and a dedicated troubleshooting page (`frontend/offline.html`)
 - **The queue:** everyone can add songs. The queue refreshes every 3 seconds, and only the host can advance it. A song is removed only if it is still the current one, so a delayed "ended" event can't skip the next song
 - **YouTube player:** search through the backend, and playback on the host page that moves to the next song automatically
 - **Room genre:** the host selects a genre when creating a room. `All genres` keeps the unfiltered behavior.
 - **Local genre moderation:** filtered requests are checked with Ollama before admission. Only `allow` reaches the playable queue; `review` requires a host decision, and `block` is rejected. Both host and guests can request songs.
 - **Host review:** the host can approve or reject uncertain requests and override rejections. An overridden rejection is appended at the end. Earlier unresolved requests hold later approvals so ordinary admission keeps request order.
 - **Verified metadata:** the classifier receives server-fetched YouTube titles and channels, not the browser's submitted labels. Search results supply a short-lived metadata cache; other video IDs use `videos.list`.
-- **Failure handling:** missing metadata, unavailable Ollama, timeouts, and invalid model output require host review. Classification runs outside the global room mutex. Decisions are cached for 30 minutes per model, genre, and verified song metadata.
+- **Failure handling:** missing metadata, unavailable Ollama, timeouts, and invalid model output require host review. Classification runs outside the global room mutex with panic recovery. Decisions are cached for 30 minutes per model, genre, and verified song metadata.
 
 ## Run locally
 
@@ -67,7 +69,7 @@ $env:OLLAMA_MODEL = "qwen3:4b"
 go run .
 ```
 
-Open `http://localhost:8080`, enter your name, choose a room genre, and create a jam. Guests enter their name and join using the room code or QR link. Start playback once on the host device. Pending and rejected requests appear separately from the playable queue; the host decides reviews under **Song requests**.
+Open the local network URL printed in the terminal (e.g. `http://192.168.x.x:8000`), enter your name, choose an optional room name and genre, and create a jam. Guests scan the QR code on their phone, enter their name, and join. Start playback once on the host device. Pending and rejected requests appear separately from the playable queue; the host decides reviews under **Song requests**.
 
 Genre classification uses text metadata and the model's knowledge, not audio analysis. It can be wrong, particularly for obscure songs, covers, and remixes. Missing local setup never silently approves a filtered song. No OpenAI key is used. The broader occasion-based AI filter and automatic session cleanup described above are still planned.
 

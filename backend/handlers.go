@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"log"
@@ -9,6 +8,8 @@ import (
 
 	"github.com/FullStackKlerant/musicjam/backend/room"
 )
+
+const cookieMaxAge = 24 * 60 * 60 // 24 hours in seconds
 
 // handlers
 func registerHandlers(mux *http.ServeMux) {
@@ -29,14 +30,23 @@ func registerHandlers(mux *http.ServeMux) {
 // New IDs come from crypto/rand so they can't be guessed, and are checked against
 // existing sessions so they are unique. Caller must hold mu.
 func getUserID(w http.ResponseWriter, r *http.Request) string {
-	if c, err := r.Cookie("userId"); err == nil {
-		return c.Value
+	id := ""
+	if c, err := r.Cookie("userId"); err == nil && c.Value != "" {
+		id = c.Value
+	} else {
+		id = room.GenerateUUIDv4()
+		for sessions[id] != nil {
+			id = room.GenerateUUIDv4()
+		}
 	}
-	id := rand.Text()
-	for sessions[id] != nil {
-		id = rand.Text()
-	}
-	http.SetCookie(w, &http.Cookie{Name: "userId", Value: id, Path: "/", HttpOnly: true})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "userId",
+		Value:    id,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   cookieMaxAge,
+	})
 	return id
 }
 
@@ -100,16 +110,23 @@ func createNewRoom(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	roomName, err := room.CleanRoomName(r.URL.Query().Get("roomName"), name)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	mu.Lock()
 	defer mu.Unlock()
 	userID := getUserID(w, r)
 	newRoom := room.NewRoom(userID, name,
 		func(code string) bool { _, taken := rooms[code]; return taken })
-	rooms[newRoom.Code()] = newRoom
+	newRoom.Name = roomName
 	newRoom.Genre = genre
+	newRoom.Save()
+	rooms[newRoom.Code()] = newRoom
 	log.Printf("room created\n%s", newRoom)
 	sessions[userID] = &Session{Name: name, RoomCode: newRoom.Code(), IsHost: true}
-	json.NewEncoder(w).Encode(map[string]any{"code": newRoom.Code(), "isHost": true})
+	json.NewEncoder(w).Encode(map[string]any{"code": newRoom.Code(), "name": newRoom.Name, "isHost": true})
 }
 
 func joinRoom(w http.ResponseWriter, r *http.Request) {
@@ -131,21 +148,21 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 	rm.AddMember(userID, name)
 	log.Printf("%q joined\n%s", name, rm)
 	sessions[userID] = &Session{Name: name, RoomCode: code, IsHost: rm.IsHost(userID)}
-	json.NewEncoder(w).Encode(map[string]any{"code": code, "isHost": rm.IsHost(userID)})
+	json.NewEncoder(w).Encode(map[string]any{"code": code, "name": rm.Name, "isHost": rm.IsHost(userID)})
 }
 
 func getRoomMembers(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	mu.Lock()
 	defer mu.Unlock()
-	curentRoom, ok := rooms[code]
+	currentRoom, ok := rooms[code]
 	// if room not found throw error
 	if !ok {
 		http.Error(w, "room not found", http.StatusNotFound)
 		return
 	}
 	// A list instead of the map, whose keys are the members' secret user IDs
-	json.NewEncoder(w).Encode(curentRoom.MemberList())
+	json.NewEncoder(w).Encode(currentRoom.MemberList())
 }
 
 // removeRoomMember lets the host kick a member out of their room.
@@ -184,6 +201,7 @@ func removeRoomMember(w http.ResponseWriter, r *http.Request) {
 		delete(sessions, removed.UserID)
 	}
 	releaseRoomRequests(host.room)
+	host.room.Save()
 	log.Printf("%q was removed\n%s", removed.Name, host.room)
 	json.NewEncoder(w).Encode(host.room.MemberList())
 }
@@ -211,6 +229,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		map[string]any{
 			"name":       currentSession.Name,
 			"roomCode":   currentSession.RoomCode,
+			"roomName":   rm.Name,
 			"isHost":     currentSession.IsHost,
 			"genre":      rm.Genre,
 			"joinOrigin": "http://" + GetLocalIP().String() + ":8000"})
@@ -251,6 +270,7 @@ func handleQueue(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		rm.Queue = rm.Queue[1:]
+		rm.Save()
 		log.Printf("song finished\n%s", rm)
 		json.NewEncoder(w).Encode(rm.Queue)
 	default:

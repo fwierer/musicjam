@@ -28,7 +28,8 @@ type requestState struct {
 
 func setupModeration(t *testing.T, engine songClassifier) (*http.ServeMux, string) {
 	t.Helper()
-	oldRooms, oldSessions, oldClassifier, oldLookup := rooms, sessions, classifier, verifySong
+	oldRooms, oldSessions, oldClassifier, oldLookup, oldDataDir := rooms, sessions, classifier, verifySong, room.DataDir
+	room.DataDir = t.TempDir()
 	rm := room.NewRoom("host", "Host", func(string) bool { return false })
 	rm.Genre = "Rock"
 	rm.AddMember("guest", "Guest")
@@ -52,7 +53,7 @@ func setupModeration(t *testing.T, engine songClassifier) (*http.ServeMux, strin
 			}
 			time.Sleep(time.Millisecond)
 		}
-		rooms, sessions, classifier, verifySong = oldRooms, oldSessions, oldClassifier, oldLookup
+		rooms, sessions, classifier, verifySong, room.DataDir = oldRooms, oldSessions, oldClassifier, oldLookup, oldDataDir
 	})
 	mux := http.NewServeMux()
 	registerHandlers(mux)

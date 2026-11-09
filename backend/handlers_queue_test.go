@@ -11,8 +11,9 @@ import (
 )
 
 func TestQueuePlayback(t *testing.T) {
-	previousRooms, previousSessions := rooms, sessions
-	t.Cleanup(func() { rooms, sessions = previousRooms, previousSessions })
+	previousRooms, previousSessions, previousDataDir := rooms, sessions, room.DataDir
+	t.Cleanup(func() { rooms, sessions, room.DataDir = previousRooms, previousSessions, previousDataDir })
+	room.DataDir = t.TempDir()
 	rm := room.NewRoom("host", "Host", func(string) bool { return false })
 	rooms = map[string]*room.Room{rm.Code(): rm}
 	sessions = map[string]*Session{

@@ -11,8 +11,9 @@ import (
 )
 
 func TestRoomMembers(t *testing.T) {
-	previousRooms, previousSessions := rooms, sessions
-	t.Cleanup(func() { rooms, sessions = previousRooms, previousSessions })
+	previousRooms, previousSessions, previousDataDir := rooms, sessions, room.DataDir
+	t.Cleanup(func() { rooms, sessions, room.DataDir = previousRooms, previousSessions, previousDataDir })
+	room.DataDir = t.TempDir()
 	rooms = map[string]*room.Room{}
 	sessions = map[string]*Session{}
 	mux := http.NewServeMux()
@@ -101,5 +102,57 @@ func TestRoomMembers(t *testing.T) {
 	expectStatus(remove("host", otherID), http.StatusOK)
 	if s := sessions["other"]; s == nil || s.RoomCode != otherCode {
 		t.Fatal("removal ended the member's session in another room")
+	}
+}
+
+func TestRoomPersistenceAndRestart(t *testing.T) {
+	previousRooms, previousSessions, previousDataDir := rooms, sessions, room.DataDir
+	t.Cleanup(func() { rooms, sessions, room.DataDir = previousRooms, previousSessions, previousDataDir })
+	room.DataDir = t.TempDir()
+	rooms = map[string]*room.Room{}
+	sessions = map[string]*Session{}
+	mux := http.NewServeMux()
+	registerHandlers(mux)
+
+	request := func(method, path, user, body string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest(method, path, strings.NewReader(body))
+		if user != "" {
+			r.AddCookie(&http.Cookie{Name: "userId", Value: user})
+		}
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, r)
+		return w
+	}
+
+	if w := request(http.MethodPost, "/api/room/create?name=Alice&roomName=Friday%20Jam", "alice-uid", ""); w.Code != http.StatusOK {
+		t.Fatalf("create status = %d: %s", w.Code, w.Body.String())
+	}
+	code := sessions["alice-uid"].RoomCode
+	if w := request(http.MethodPost, "/api/room/join?code="+code+"&name=Bob", "bob-uid", ""); w.Code != http.StatusOK {
+		t.Fatalf("join status = %d: %s", w.Code, w.Body.String())
+	}
+
+	// Simulate server restart: wipe in-memory maps and reload from room JSON files
+	rooms = room.LoadExistingRoomsFromDatabase(room.DataDir)
+	sessions = loadSessionsFromRooms(rooms)
+
+	if w := request(http.MethodGet, "/api/session", "alice-uid", ""); w.Code != http.StatusOK {
+		t.Fatalf("host session after restart = %d: %s", w.Code, w.Body.String())
+	}
+	if w := request(http.MethodGet, "/api/session", "bob-uid", ""); w.Code != http.StatusOK {
+		t.Fatalf("guest session after restart = %d: %s", w.Code, w.Body.String())
+	}
+
+	// Verify Member.UserID was restored from the room JSON file so kicking Bob after restart ends his session
+	bobMember, ok := rooms[code].Member("bob-uid")
+	if !ok || bobMember.UserID != "bob-uid" {
+		t.Fatalf("restored member missing UserID: %+v", bobMember)
+	}
+	kickBody, _ := json.Marshal(map[string]string{"memberId": bobMember.ID})
+	if w := request(http.MethodDelete, "/api/room/removeRoomMember", "alice-uid", string(kickBody)); w.Code != http.StatusOK {
+		t.Fatalf("kick after restart = %d: %s", w.Code, w.Body.String())
+	}
+	if w := request(http.MethodGet, "/api/session", "bob-uid", ""); w.Code != http.StatusUnauthorized {
+		t.Fatalf("kicked guest still has session: %d", w.Code)
 	}
 }

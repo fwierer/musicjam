@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -51,7 +50,12 @@ func writeRequestState(w http.ResponseWriter, c caller) {
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{"genre": c.room.Genre, "queue": c.room.Queue, "requests": requests})
+	json.NewEncoder(w).Encode(map[string]any{
+		"roomName": c.room.Name,
+		"genre":    c.room.Genre,
+		"queue":    c.room.Queue,
+		"requests": requests,
+	})
 }
 
 func submitSong(w http.ResponseWriter, r *http.Request, legacy bool) {
@@ -70,7 +74,7 @@ func submitSong(w http.ResponseWriter, r *http.Request, legacy bool) {
 	if !ok {
 		return
 	}
-	song.ID = rand.Text()
+	song.ID = room.GenerateUUIDv4()
 	request := &room.SongRequest{
 		ID: song.ID, Song: song, UserID: c.userID, RequestedBy: c.session.Name,
 		Status: room.Pending, Reason: "Checking the room genre.",
@@ -83,6 +87,7 @@ func submitSong(w http.ResponseWriter, r *http.Request, legacy bool) {
 		c.room.ProcessingRequests = true
 		go processSongRequests(c.room, classifier, verifySong)
 	}
+	c.room.Save()
 	w.Header().Set("Content-Type", "application/json")
 	if legacy {
 		json.NewEncoder(w).Encode(c.room.Queue)
@@ -143,6 +148,7 @@ func processSongRequests(rm *room.Room, engine songClassifier, lookup func(conte
 		}
 		request.Status, request.Reason = decision.Decision, decision.Reason
 		releaseRoomRequests(rm)
+		rm.Save()
 		mu.Unlock()
 	}
 }
@@ -178,6 +184,7 @@ func decideSongRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
+	c.room.Save()
 	writeRequestState(w, c)
 }
 

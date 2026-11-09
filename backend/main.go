@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +30,7 @@ func main() {
 	mux := http.NewServeMux()
 	registerHandlers(mux)
 	rooms = room.LoadExistingRoomsFromDatabase("../database")
+	sessions = loadSessionsFromRooms(rooms)
 	localIp := GetLocalIP()
 
 	server := &http.Server{
@@ -44,12 +46,46 @@ func main() {
 
 }
 
-// get local preferred IP address and use it to host backend
-// because of this other devices int the same newtork will be able to connect to the sevice
+// loadSessionsFromRooms rebuilds active user sessions directly from the members
+// stored inside each room's JSON file. Rooms are processed from oldest to newest
+// so a user who joined a newer room gets their latest room session.
+func loadSessionsFromRooms(loadedRooms map[string]*room.Room) map[string]*Session {
+	loaded := make(map[string]*Session)
+	roomList := make([]*room.Room, 0, len(loadedRooms))
+	for _, rm := range loadedRooms {
+		roomList = append(roomList, rm)
+	}
+	sort.Slice(roomList, func(i, j int) bool {
+		if roomList[i].UpdatedAt != roomList[j].UpdatedAt {
+			return roomList[i].UpdatedAt < roomList[j].UpdatedAt
+		}
+		return roomList[i].Code() < roomList[j].Code()
+	})
+	for _, rm := range roomList {
+		for userID, m := range rm.Members() {
+			loaded[userID] = &Session{
+				Name:     m.Name,
+				RoomCode: rm.Code(),
+				IsHost:   rm.IsHost(userID),
+			}
+		}
+		for _, req := range rm.Requests {
+			if req.Status == room.Pending && !rm.ProcessingRequests {
+				rm.ProcessingRequests = true
+				go processSongRequests(rm, classifier, verifySong)
+				break
+			}
+		}
+	}
+	return loaded
+}
+
+// GetLocalIP returns the local preferred IP address used to host the backend
+// so other devices on the same network can connect to the service.
 func GetLocalIP() net.IP {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
-		log.Println("Unbale to resolve loal IP address" + err.Error())
+		log.Println("Unable to resolve local IP address: " + err.Error())
 		return net.IPv4(127, 0, 0, 1)
 	}
 	defer conn.Close()
