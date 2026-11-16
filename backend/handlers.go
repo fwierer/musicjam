@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/FullStackKlerant/musicjam/backend/room"
 )
@@ -23,7 +24,11 @@ func registerHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/api/room/getRoomMembers", getRoomMembers)
 	mux.HandleFunc("/api/room/removeRoomMember", removeRoomMember)
 	mux.HandleFunc("/api/session", getSession)
-	mux.Handle("/", http.FileServer(http.Dir("../frontend")))
+	frontendDir := os.Getenv("FRONTEND_DIR")
+	if frontendDir == "" {
+		frontendDir = "../frontend"
+	}
+	mux.Handle("/", http.FileServer(http.Dir(frontendDir)))
 }
 
 // getUserID returns the user's ID from their cookie, or creates a new user.
@@ -232,7 +237,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 			"roomName":   rm.Name,
 			"isHost":     currentSession.IsHost,
 			"genre":      rm.Genre,
-			"joinOrigin": "http://" + GetLocalIP().String() + ":8000"})
+			"joinOrigin": getJoinOrigin()})
 }
 
 func handleQueue(w http.ResponseWriter, r *http.Request) {

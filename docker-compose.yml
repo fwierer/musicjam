@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    container_name: musicjam-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - FRONTEND_DIR=/app/frontend
+      - DATA_DIR=/app/database
+      - OLLAMA_URL=http://ollama:11434
+      - PUBLIC_ORIGIN=${PUBLIC_ORIGIN:-http://localhost:8000}
+    volumes:
+      - ./database:/app/database
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: musicjam-ollama
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  ollama_models:

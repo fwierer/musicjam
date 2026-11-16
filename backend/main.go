@@ -29,7 +29,13 @@ func main() {
 
 	mux := http.NewServeMux()
 	registerHandlers(mux)
-	rooms = room.LoadExistingRoomsFromDatabase("../database")
+	dataDir := os.Getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = "../database"
+	}
+	room.DataDir = dataDir
+	_ = os.MkdirAll(room.DataDir, 0755)
+	rooms = room.LoadExistingRoomsFromDatabase(room.DataDir)
 	sessions = loadSessionsFromRooms(rooms)
 	localIp := GetLocalIP()
 
@@ -91,6 +97,13 @@ func GetLocalIP() net.IP {
 	defer conn.Close()
 	localAddress := conn.LocalAddr().(*net.UDPAddr)
 	return localAddress.IP
+}
+
+func getJoinOrigin() string {
+	if origin := strings.TrimRight(os.Getenv("PUBLIC_ORIGIN"), "/"); origin != "" {
+		return origin
+	}
+	return "http://" + GetLocalIP().String() + ":8000"
 }
 
 func loadEnv() {
