@@ -15,8 +15,9 @@ flowchart LR
     Browser["Host & Guest Browsers<br/>(http://<LAN_IP>:8000)"] --> FE["1. musicjam-frontend (:8000 -> :80)<br/>Nginx static frontend + /api proxy"]
 
     FE -->|"/api/* & /healthz"| App["2. musicjam-app (:8000 internal)<br/>Go Jam Session Core API"]
-    App -->|"Search & Lookup (:8081)"| YT["3. musicjam-youtube (:8081)<br/>YouTube Data API v3"]
+    App -->|"Search (:8081)"| YT["3. musicjam-youtube (:8081)<br/>YouTube Data API v3"]
     App -->|"Moderate (:8082)"| LLM["4. musicjam-llm (:8082)<br/>Go API + bundled Ollama"]
+    LLM -->|"Lookup verified metadata (:8081)"| YT
     App -->|"JSON CRUD (:8084)"| DB["5. musicjam-db (:8084)<br/>JSON File DB Service"]
 
     LLM -.-> VolLLM[("ollama_models volume")]
@@ -26,9 +27,9 @@ flowchart LR
 | Container | Build Context | Port Mapping | Responsibility |
 | :--- | :--- | :--- | :--- |
 | **`musicjam-frontend`** | [`frontend/`](../frontend) ([`Dockerfile`](../frontend/Dockerfile), [`nginx.conf`](../frontend/nginx.conf)) | `0.0.0.0:8000:80` | Serves HTML/CSS/JS static files with Nginx and proxies `/api/*` and `/healthz` to `http://app:8000` (forwarding `Host`, `X-Forwarded-Host`, `X-Forwarded-Proto`). |
-| **`musicjam-app`** | Root [`.`](../Dockerfile) (`backend/` + `backend/room/`) | internal `8000` | Pure Go API server (no bundled frontend or local DB mount in Docker). Manages rooms, members, host checks, cookies/sessions, ordered queue, skip logic, and orchestration between `youtube`, `llm`, and `db`. |
-| **`musicjam-youtube`** | [`backend/YouTube/`](../backend/YouTube) | `8081:8081` | Holds `YOUTUBE_API_KEY`, calls YouTube `search.list` + `videos.list`, filters non-embeddable / `ytAgeRestricted` / geo-blocked tracks, ranks embed-safe uploads first, and caches verified metadata. |
-| **`musicjam-llm`** | [`backend/LLM/`](../backend/LLM) | `8082:8082` | Combines the Go moderation service and `ollama serve` (on `127.0.0.1:11434`) inside one `ollama/ollama:latest` container via [`entrypoint.sh`](../backend/LLM/entrypoint.sh). Auto-pulls `qwen3:4b` in background if missing from `ollama_models`. |
+| **`musicjam-app`** | Root [`.`](../Dockerfile) (`backend/` + `backend/room/`) | internal `8000` | Pure Go API server (no bundled frontend or local DB mount in Docker). Manages rooms, members, host checks, cookies/sessions, ordered queue, skip logic, and orchestration between `youtube` (search), `llm` (moderation), and `db` (persistence). |
+| **`musicjam-youtube`** | [`backend/YouTube/`](../backend/YouTube) | `8081:8081` | Holds `YOUTUBE_API_KEY`, calls YouTube `search.list` + `videos.list`, filters non-embeddable / `ytAgeRestricted` / geo-blocked tracks, ranks embed-safe uploads first, and serves verified metadata on `/lookup` (consumed by `musicjam-llm`). |
+| **`musicjam-llm`** | [`backend/LLM/`](../backend/LLM) | `8082:8082` | Combines the Go moderation service and `ollama serve` (on `127.0.0.1:11434`) inside one `ollama/ollama:latest` container via [`entrypoint.sh`](../backend/LLM/entrypoint.sh). Calls `musicjam-youtube` (`YOUTUBE_URL=http://youtube:8081`, `GET /lookup`) for authoritative song metadata before classifying with `qwen3:4b`. |
 | **`musicjam-db`** | [`backend/Database/`](../backend/Database) | `8084:8084` | Owns `./database:/app/database` and persists each room as `room_<uuid>.json` atomically over HTTP (`GET/PUT/DELETE /rooms`). |
 
 > [!NOTE]

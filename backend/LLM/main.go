@@ -9,12 +9,16 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
 )
+
+var videoIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{11}$`)
 
 type Song struct {
 	ID      string `json:"id"`
@@ -45,12 +49,14 @@ type cachedVerdict struct {
 }
 
 type llmServer struct {
-	ollamaURL string
-	model     string
-	client    *http.Client
-	slots     chan struct{}
-	mu        sync.Mutex
-	cache     map[string]cachedVerdict
+	ollamaURL     string
+	youtubeURL    string
+	model         string
+	client        *http.Client
+	youtubeClient *http.Client
+	slots         chan struct{}
+	mu            sync.Mutex
+	cache         map[string]cachedVerdict
 }
 
 func newLLMServer() *llmServer {
@@ -58,17 +64,54 @@ func newLLMServer() *llmServer {
 	if baseURL == "" {
 		baseURL = "http://127.0.0.1:11434"
 	}
+	youtubeURL := strings.TrimRight(strings.TrimSpace(os.Getenv("YOUTUBE_URL")), "/")
+	if youtubeURL == "" {
+		youtubeURL = "http://127.0.0.1:8081"
+	}
 	model := os.Getenv("OLLAMA_MODEL")
 	if model == "" {
 		model = "qwen3:4b"
 	}
 	return &llmServer{
-		ollamaURL: baseURL + "/api/chat",
-		model:     model,
-		client:    &http.Client{Timeout: 90 * time.Second},
-		slots:     make(chan struct{}, 2),
-		cache:     map[string]cachedVerdict{},
+		ollamaURL:     baseURL + "/api/chat",
+		youtubeURL:    youtubeURL,
+		model:         model,
+		client:        &http.Client{Timeout: 90 * time.Second},
+		youtubeClient: &http.Client{Timeout: 10 * time.Second},
+		slots:         make(chan struct{}, 2),
+		cache:         map[string]cachedVerdict{},
 	}
+}
+
+func (s *llmServer) fetchVerifiedSong(ctx context.Context, videoID string) (Song, error) {
+	reqURL := s.youtubeURL + "/lookup?id=" + url.QueryEscape(videoID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return Song{}, err
+	}
+	resp, err := s.youtubeClient.Do(req)
+	if err != nil {
+		return Song{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return Song{}, fmt.Errorf("youtube lookup status %d", resp.StatusCode)
+	}
+
+	var song Song
+	decoder := json.NewDecoder(io.LimitReader(resp.Body, 64<<10))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&song); err != nil {
+		return Song{}, err
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		return Song{}, errors.New("extra youtube response output")
+	}
+	if song.VideoID != videoID || strings.TrimSpace(song.Title) == "" {
+		return Song{}, errors.New("invalid verified song metadata")
+	}
+	return song, nil
 }
 
 func (s *llmServer) handleModerate(w http.ResponseWriter, r *http.Request) {
@@ -82,8 +125,9 @@ func (s *llmServer) handleModerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Theme = strings.TrimSpace(req.Theme)
-	if strings.TrimSpace(req.Song.Title) == "" || req.Theme == "" {
-		http.Error(w, "song title and theme are required", http.StatusBadRequest)
+	req.Song.VideoID = strings.TrimSpace(req.Song.VideoID)
+	if !videoIDPattern.MatchString(req.Song.VideoID) || req.Theme == "" {
+		http.Error(w, "valid song videoId and theme are required", http.StatusBadRequest)
 		return
 	}
 	if strings.EqualFold(req.Theme, "Any") {
@@ -95,14 +139,22 @@ func (s *llmServer) handleModerate(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	verdict, err := s.classify(r.Context(), req.Song, req.Theme)
+	verifiedSong, err := s.fetchVerifiedSong(r.Context(), req.Song.VideoID)
+	if err != nil {
+		log.Printf("youtube lookup for %s failed: %v", req.Song.VideoID, err)
+		http.Error(w, "failed to verify song metadata with youtube service", http.StatusBadGateway)
+		return
+	}
+	verifiedSong.ID = req.Song.ID
+
+	verdict, err := s.classify(r.Context(), verifiedSong, req.Theme)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(ModerateResponse{
-		Song:     req.Song,
+		Song:     verifiedSong,
 		Decision: verdict.Decision,
 		Reason:   verdict.Reason,
 	})

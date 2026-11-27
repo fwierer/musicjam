@@ -19,7 +19,6 @@ const cookieMaxAge = 24 * 60 * 60 // 24 hours in seconds
 
 var (
 	classifier     songClassifier = newLLMClient()
-	verifySong                    = lookupYouTubeSong
 	videoIDPattern                = regexp.MustCompile(`^[A-Za-z0-9_-]{11}$`)
 )
 
@@ -415,7 +414,7 @@ func submitSong(w http.ResponseWriter, r *http.Request, legacy bool) {
 		releaseRoomRequests(c.room)
 	} else if !c.room.ProcessingRequests {
 		c.room.ProcessingRequests = true
-		go processSongRequests(c.room, classifier, verifySong)
+		go processSongRequests(c.room, classifier)
 	}
 	c.room.Save()
 	w.Header().Set("Content-Type", "application/json")
@@ -428,7 +427,7 @@ func submitSong(w http.ResponseWriter, r *http.Request, legacy bool) {
 }
 
 // One worker per room preserves admission order; network calls never hold mu.
-func processSongRequests(rm *room.Room, engine songClassifier, lookup func(context.Context, string) (room.Song, error)) {
+func processSongRequests(rm *room.Room, engine songClassifier) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println("panic in processSongRequests:", r)
@@ -455,25 +454,20 @@ func processSongRequests(rm *room.Room, engine songClassifier, lookup func(conte
 		mu.Unlock()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
-		verified, err := lookup(ctx, song.VideoID)
-		decision := verdict{room.Review, "YouTube metadata could not be verified. Host review required."}
-		if err == nil {
-			verified.ID = song.ID
-			decision, err = engine.Classify(ctx, verified, genre)
-			if err != nil || !room.ValidDecision(decision.Decision) || (decision.Decision != room.Allow && decision.Reason == "") {
-				decision = verdict{room.Review, "AI check unavailable or invalid. Host review required."}
-			}
+		decision, err := engine.Classify(ctx, song, genre)
+		if err != nil || !room.ValidDecision(decision.Decision) || (decision.Decision != room.Allow && decision.Reason == "") {
+			decision = verdict{Decision: room.Review, Reason: "AI check or YouTube verification unavailable. Host review required."}
 		}
 		cancel()
 
 		mu.Lock()
-		if err == nil || verified.VideoID != "" {
-			request.Song = verified
+		if decision.Song.VideoID != "" && strings.TrimSpace(decision.Song.Title) != "" {
+			request.Song = decision.Song
 			request.Song.ID = song.ID
 		}
 		session := sessions[request.UserID]
 		if rooms[rm.Code()] != rm || session == nil || session.RoomCode != rm.Code() {
-			decision = verdict{room.Block, "The requester is no longer in this room."}
+			decision = verdict{Decision: room.Block, Reason: "The requester is no longer in this room."}
 		}
 		request.Status, request.Reason = decision.Decision, decision.Reason
 		releaseRoomRequests(rm)

@@ -43,9 +43,12 @@ services:
       - "8082:8082"
     environment:
       - PORT=8082
+      - YOUTUBE_URL=http://youtube:8081
       - OLLAMA_URL=http://127.0.0.1:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:4b}
       - OLLAMA_AUTO_PULL=${OLLAMA_AUTO_PULL:-true}
+    depends_on:
+      - youtube
     volumes:
       - ollama_models:/root/.ollama
     restart: unless-stopped

@@ -20,8 +20,9 @@ import (
 // --- Moderation (LLM) Bounded Context Client ---
 
 type verdict struct {
-	Decision string `json:"decision"`
-	Reason   string `json:"reason"`
+	Song     room.Song `json:"song"`
+	Decision string    `json:"decision"`
+	Reason   string    `json:"reason"`
 }
 
 type songClassifier interface {
@@ -87,15 +88,19 @@ func (c *llmClient) Classify(ctx context.Context, song room.Song, theme string) 
 		return verdict{}, errors.New("extra response output")
 	}
 
+	verifiedSong := result.Song
+	if verifiedSong.ID == "" {
+		verifiedSong.ID = song.ID
+	}
 	reason := strings.TrimSpace(result.Reason)
 	switch result.Decision {
 	case "yes":
-		return verdict{Decision: room.Allow, Reason: ""}, nil
+		return verdict{Song: verifiedSong, Decision: room.Allow, Reason: ""}, nil
 	case "no":
 		if reason == "" || utf8.RuneCountInString(reason) > 400 {
 			return verdict{}, errors.New("invalid rejection reason")
 		}
-		return verdict{Decision: room.Block, Reason: reason}, nil
+		return verdict{Song: verifiedSong, Decision: room.Block, Reason: reason}, nil
 	default:
 		return verdict{}, errors.New("invalid LLM decision")
 	}
@@ -160,37 +165,6 @@ func (c *youtubeServiceClient) Search(ctx context.Context, query string) ([]sear
 	return results, nil
 }
 
-func (c *youtubeServiceClient) Lookup(ctx context.Context, videoID string) (room.Song, error) {
-	reqURL := c.endpoint() + "/lookup?id=" + url.QueryEscape(videoID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
-	if err != nil {
-		return room.Song{}, err
-	}
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return room.Song{}, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return room.Song{}, fmt.Errorf("youtube lookup status %d", resp.StatusCode)
-	}
-
-	var song room.Song
-	decoder := json.NewDecoder(io.LimitReader(resp.Body, 64<<10))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&song); err != nil {
-		return room.Song{}, err
-	}
-	if err := decoder.Decode(new(any)); err != io.EOF {
-		return room.Song{}, errors.New("extra response output")
-	}
-	if song.VideoID != videoID || strings.TrimSpace(song.Title) == "" {
-		return room.Song{}, errors.New("invalid verified song metadata")
-	}
-	return song, nil
-}
-
 var youtubeService = newYouTubeServiceClient()
 
 func handleYouTubeSearch(w http.ResponseWriter, r *http.Request) {
@@ -212,8 +186,4 @@ func handleYouTubeSearch(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
-}
-
-func lookupYouTubeSong(ctx context.Context, videoID string) (room.Song, error) {
-	return youtubeService.Lookup(ctx, videoID)
 }

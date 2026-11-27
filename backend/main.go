@@ -88,7 +88,7 @@ func loadSessionsFromRooms(loadedRooms map[string]*room.Room) map[string]*Sessio
 		for _, req := range rm.Requests {
 			if req.Status == room.Pending && !rm.ProcessingRequests {
 				rm.ProcessingRequests = true
-				go processSongRequests(rm, classifier, verifySong)
+				go processSongRequests(rm, classifier)
 				break
 			}
 		}

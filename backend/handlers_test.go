@@ -204,7 +204,7 @@ func TestJoinOriginUsesLanIPInsteadOfLocalhost(t *testing.T) {
 
 func setupModeration(t *testing.T, engine songClassifier) (*http.ServeMux, string) {
 	t.Helper()
-	oldRooms, oldSessions, oldClassifier, oldLookup, oldDataDir := rooms, sessions, classifier, verifySong, room.DataDir
+	oldRooms, oldSessions, oldClassifier, oldDataDir := rooms, sessions, classifier, room.DataDir
 	room.DataDir = t.TempDir()
 	rm := room.NewRoom("host", "Host", func(string) bool { return false })
 	rm.Genre = "Rock"
@@ -212,9 +212,6 @@ func setupModeration(t *testing.T, engine songClassifier) (*http.ServeMux, strin
 	rooms = map[string]*room.Room{rm.Code(): rm}
 	sessions = map[string]*Session{"host": {Name: "Host", RoomCode: rm.Code(), IsHost: true}, "guest": {Name: "Guest", RoomCode: rm.Code()}}
 	classifier = engine
-	verifySong = func(ctx context.Context, id string) (room.Song, error) {
-		return room.Song{VideoID: id, Title: "Verified " + id, Channel: "Verified artist"}, nil
-	}
 	t.Cleanup(func() {
 		deadline := time.Now().Add(3 * time.Second)
 		for {
@@ -229,7 +226,7 @@ func setupModeration(t *testing.T, engine songClassifier) (*http.ServeMux, strin
 			}
 			time.Sleep(time.Millisecond)
 		}
-		rooms, sessions, classifier, verifySong, room.DataDir = oldRooms, oldSessions, oldClassifier, oldLookup, oldDataDir
+		rooms, sessions, classifier, room.DataDir = oldRooms, oldSessions, oldClassifier, oldDataDir
 	})
 	mux := http.NewServeMux()
 	registerHandlers(mux)
@@ -287,12 +284,13 @@ func TestModerationAndBoundedContextClients(t *testing.T) {
 	defer unblock()
 
 	mux, _ := setupModeration(t, classifierFunc(func(ctx context.Context, song room.Song, genre string) (verdict, error) {
+		verified := room.Song{VideoID: song.VideoID, Title: "Verified " + song.VideoID, Channel: "Verified artist"}
 		if song.VideoID == "aaaaaaaaaaa" {
 			close(entered)
 			<-release
-			return verdict{room.Review, "Uncertain genre."}, nil
+			return verdict{Song: verified, Decision: room.Review, Reason: "Uncertain genre."}, nil
 		}
-		return verdict{room.Allow, ""}, nil
+		return verdict{Song: verified, Decision: room.Allow}, nil
 	}))
 
 	moderationRequest(t, mux, http.MethodPost, "/api/room/requests", "guest", `{"videoId":"aaaaaaaaaaa","title":"Browser title","channel":"Fake"}`, http.StatusAccepted)
@@ -304,22 +302,22 @@ func TestModerationAndBoundedContextClients(t *testing.T) {
 	if len(state.Queue) != 0 {
 		t.Fatal("review request did not hold queue order")
 	}
+	if state.Requests[0].Song.Title != "Verified aaaaaaaaaaa" || state.Requests[1].Song.Title != "Verified bbbbbbbbbbb" {
+		t.Fatalf("expected verified metadata on requests, got %+v", state.Requests)
+	}
 	decision := `{"requestId":"` + state.Requests[0].ID + `","decision":"allow"}`
 	moderationRequest(t, mux, http.MethodPost, "/api/room/requests/decision", "host", decision, http.StatusOK)
 	state = moderationState(t, mux, "host")
-	if len(state.Queue) != 2 || state.Queue[0].VideoID != "aaaaaaaaaaa" || state.Queue[1].VideoID != "bbbbbbbbbbb" {
-		t.Fatalf("unexpected queue order: %+v", state.Queue)
+	if len(state.Queue) != 2 || state.Queue[0].VideoID != "aaaaaaaaaaa" || state.Queue[0].Title != "Verified aaaaaaaaaaa" || state.Queue[1].VideoID != "bbbbbbbbbbb" || state.Queue[1].Title != "Verified bbbbbbbbbbb" {
+		t.Fatalf("unexpected queue order or metadata: %+v", state.Queue)
 	}
 
-	// Verify YouTube & Player gateway forwarding
+	// Verify YouTube search gateway forwarding
 	ytSvc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/search":
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`[{"videoId":"zzzzzzzzzzz","title":"Canonical song","channel":"Canonical artist","thumbnail":"https://img.example/1.jpg"}]`))
-		case "/lookup":
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"videoId":"zzzzzzzzzzz","title":"Canonical song","channel":"Canonical artist"}`))
 		default:
 			http.NotFound(w, r)
 		}
@@ -332,8 +330,44 @@ func TestModerationAndBoundedContextClients(t *testing.T) {
 	if err := json.NewDecoder(wSearch.Body).Decode(&results); err != nil || len(results) != 1 || results[0].VideoID != "zzzzzzzzzzz" {
 		t.Fatalf("unexpected search results: %+v (%v)", results, err)
 	}
-	if _, err := lookupYouTubeSong(context.Background(), "zzzzzzzzzzz"); err != nil {
-		t.Fatalf("unexpected lookup error: %v", err)
+
+	// Verify LLM client preserves verified song metadata returned by /moderate
+	llmSvc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/moderate" || r.Method != http.MethodPost {
+			http.NotFound(w, r)
+			return
+		}
+		var req struct {
+			Song  room.Song `json:"song"`
+			Theme string    `json:"theme"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatal(err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if req.Theme == "Classical" {
+			_, _ = w.Write([]byte(`{"song":{"videoId":"zzzzzzzzzzz","title":"Canonical song","channel":"Canonical artist"},"decision":"no","reason":"Not classical."}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"song":{"videoId":"zzzzzzzzzzz","title":"Canonical song","channel":"Canonical artist"},"decision":"yes","reason":""}`))
+	}))
+	defer llmSvc.Close()
+	t.Setenv("LLM_URL", llmSvc.URL)
+
+	client := newLLMClient()
+	yesVerdict, err := client.Classify(context.Background(), room.Song{ID: "req-1", VideoID: "zzzzzzzzzzz", Title: "Browser title", Channel: "Fake"}, "Rock")
+	if err != nil {
+		t.Fatalf("unexpected LLM Classify error: %v", err)
+	}
+	if yesVerdict.Decision != room.Allow || yesVerdict.Song.ID != "req-1" || yesVerdict.Song.Title != "Canonical song" || yesVerdict.Song.Channel != "Canonical artist" {
+		t.Fatalf("unexpected yes verdict: %+v", yesVerdict)
+	}
+	noVerdict, err := client.Classify(context.Background(), room.Song{ID: "req-2", VideoID: "zzzzzzzzzzz", Title: "Browser title", Channel: "Fake"}, "Classical")
+	if err != nil {
+		t.Fatalf("unexpected LLM Classify rejection error: %v", err)
+	}
+	if noVerdict.Decision != room.Block || noVerdict.Reason != "Not classical." || noVerdict.Song.ID != "req-2" || noVerdict.Song.Title != "Canonical song" {
+		t.Fatalf("unexpected no verdict: %+v", noVerdict)
 	}
 
 	// Classifier failure falls back to host review
