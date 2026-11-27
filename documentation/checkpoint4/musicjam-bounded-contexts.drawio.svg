@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="1760px" height="1270px" viewBox="0 0 1760 1270" style="background-color:#ffffff;" content="&lt;mxfile host=&quot;app.diagrams.net&quot; pages=&quot;1&quot;&gt;
+  &lt;diagram id=&quot;musicjam-bounded-contexts-cp4&quot; name=&quot;MusicJam · Context Map · Checkpoint 4&quot;&gt;
+    &lt;mxGraphModel dx=&quot;1800&quot; dy=&quot;1300&quot; grid=&quot;1&quot; gridSize=&quot;10&quot; guides=&quot;1&quot; tooltips=&quot;1&quot; connect=&quot;1&quot; arrows=&quot;1&quot; fold=&quot;1&quot; page=&quot;1&quot; pageScale=&quot;1&quot; pageWidth=&quot;1760&quot; pageHeight=&quot;1270&quot; math=&quot;0&quot; shadow=&quot;0&quot;&gt;
+      &lt;root&gt;
+        &lt;mxCell id=&quot;0&quot; /&gt;
+        &lt;mxCell id=&quot;1&quot; parent=&quot;0&quot; /&gt;
+        &lt;mxCell id=&quot;title&quot; parent=&quot;1&quot; style=&quot;text;html=0;align=left;verticalAlign=middle;fontFamily=Segoe UI;fontSize=26;fontStyle=1;fontColor=#1e293b;&quot; value=&quot;MusicJam · Bounded Contexts &amp;amp; Microservice Architecture · Checkpoint 4&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;36&quot; width=&quot;1680&quot; x=&quot;40&quot; y=&quot;18&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;subtitle&quot; parent=&quot;1&quot; style=&quot;text;html=0;align=left;verticalAlign=middle;fontFamily=Segoe UI;fontSize=15;fontColor=#475569;&quot; value=&quot;API Gateway separates UI from backend services · Services call each other directly over HTTP (no gateway) · Each service owns its own data&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;28&quot; width=&quot;1680&quot; x=&quot;40&quot; y=&quot;56&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;docker-net&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=2;html=1;align=left;verticalAlign=top;spacing=16;fontFamily=Segoe UI;fontSize=16;fontStyle=1;fontColor=#334155;fillColor=#f8fafc;strokeColor=#475569;strokeWidth=1.5;dashed=1;dashPattern=8 6;&quot; value=&quot;Internal Docker Network — Direct HTTP between Microservices (No API Gateway)&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;725&quot; width=&quot;1680&quot; x=&quot;40&quot; y=&quot;505&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;bg-core&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=3;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;630&quot; width=&quot;480&quot; x=&quot;60&quot; y=&quot;585&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;bg-moderation&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=3;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;630&quot; width=&quot;480&quot; x=&quot;640&quot; y=&quot;585&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;bg-catalog&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=3;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;630&quot; width=&quot;480&quot; x=&quot;1220&quot; y=&quot;585&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;ui&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#f5eef9;strokeColor=#9370ac;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:19px&amp;quot;&amp;gt;Host &amp;amp;amp; Guest UI + Integrated Player&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;Browser (HTML / CSS / JS + YT.Player)&amp;lt;br&amp;gt;User interactions, QR join &amp;amp;amp; host playback&amp;lt;br&amp;gt;Browser state: userId cookie &amp;amp;amp; localStorage name&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;160&quot; width=&quot;540&quot; x=&quot;80&quot; y=&quot;105&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;iframe&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#f1f5f9;strokeColor=#64748b;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:19px&amp;quot;&amp;gt;YouTube IFrame Player API&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;External system&amp;lt;br&amp;gt;Loads &amp;amp;amp; plays video on host device&amp;lt;br&amp;gt;Provides playback end &amp;amp;amp; embed error events&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;160&quot; width=&quot;520&quot; x=&quot;1160&quot; y=&quot;105&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;gateway&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=16;fontFamily=Segoe UI;fontSize=15;fontColor=#203047;strokeWidth=2;fillColor=#ede9fe;strokeColor=#7c3aed;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:19px&amp;quot;&amp;gt;API Gateway · musicjam-frontend (Nginx :8000 → :80)&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;Serves static frontend · Proxies /api/* &amp;amp;amp; /healthz → http://app:8000&amp;lt;br&amp;gt;Forwards Host &amp;amp;amp; X-Forwarded-Host headers for LAN QR code URLs&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;110&quot; width=&quot;540&quot; x=&quot;80&quot; y=&quot;335&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;core&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#eef4ff;strokeColor=#5d83ba;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:19px&amp;quot;&amp;gt;Jam Session Core (musicjam-app :8000)&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;Room · Member · Genre · SongRequest&amp;lt;br&amp;gt;Ordered queue &amp;amp;amp; host-only skip / admission&amp;lt;br&amp;gt;Orchestrates search, moderation &amp;amp;amp; persistence&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;180&quot; width=&quot;440&quot; x=&quot;80&quot; y=&quot;605&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;moderation&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#eef7eb;strokeColor=#66945e;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:19px&amp;quot;&amp;gt;Moderation (musicjam-llm :8082)&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;Assesses genre fit (yes / no + reason)&amp;lt;br&amp;gt;Fetches verified metadata from Search Catalog&amp;lt;br&amp;gt;Failure degrades to host review in Core&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;180&quot; width=&quot;440&quot; x=&quot;660&quot; y=&quot;605&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;catalog&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#fff4e6;strokeColor=#c27a25;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:19px&amp;quot;&amp;gt;Search Catalog (musicjam-youtube :8081)&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;GET /search?q=... (embed-safe ranking)&amp;lt;br&amp;gt;GET /lookup?id=... (verified title &amp;amp;amp; channel)&amp;lt;br&amp;gt;Filters age-restricted &amp;amp;amp; geo-blocked tracks&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;180&quot; width=&quot;440&quot; x=&quot;1240&quot; y=&quot;605&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;db&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#eef4ff;strokeColor=#5d83ba;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:19px&amp;quot;&amp;gt;Room Persistence (musicjam-db :8084)&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;GET / PUT / DELETE /rooms/{code}&amp;lt;br&amp;gt;Atomic JSON persistence (*.tmp → rename)&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;150&quot; width=&quot;440&quot; x=&quot;80&quot; y=&quot;865&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;llm-data&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#eef7eb;strokeColor=#66945e;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:19px&amp;quot;&amp;gt;Moderation Owned Data&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;In-memory verdict cache (30m TTL, max 512)&amp;lt;br&amp;gt;Docker volume: ollama_models (qwen3:4b)&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;150&quot; width=&quot;440&quot; x=&quot;660&quot; y=&quot;865&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;yt-data&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#fff4e6;strokeColor=#c27a25;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:19px&amp;quot;&amp;gt;Search Catalog Owned Data&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;In-memory metadata cache (30m TTL, max 512)&amp;lt;br&amp;gt;Exclusive YOUTUBE_API_KEY &amp;amp;amp; region config&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;150&quot; width=&quot;440&quot; x=&quot;1240&quot; y=&quot;865&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;db-files&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=16;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#5d83ba;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:18px&amp;quot;&amp;gt;Room JSON Files (./database/)&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;room_&amp;amp;lt;uuid&amp;amp;gt;.json (members, queue, requests)&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;120&quot; width=&quot;440&quot; x=&quot;80&quot; y=&quot;1075&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;ollama&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=16;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#f1f5f9;strokeColor=#64748b;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:18px&amp;quot;&amp;gt;Ollama Local Runtime (127.0.0.1:11434)&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;Bundled in musicjam-llm · Structured JSON&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;120&quot; width=&quot;440&quot; x=&quot;660&quot; y=&quot;1075&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;yt-api&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=12;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=16;fontFamily=Segoe UI;fontSize=16;fontColor=#203047;strokeWidth=1.5;fillColor=#f1f5f9;strokeColor=#64748b;&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size:18px&amp;quot;&amp;gt;YouTube Data API v3 (External)&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;search.list &amp;amp;amp; videos.list&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;120&quot; width=&quot;440&quot; x=&quot;1240&quot; y=&quot;1075&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-ui-iframe&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;ui&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;&quot; target=&quot;iframe&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-ui-iframe&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#ffffff;strokeColor=none;spacing=4;&quot; value=&quot;Controls / playback events&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;34&quot; width=&quot;220&quot; x=&quot;780&quot; y=&quot;168&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-ui-gw&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;ui&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;&quot; target=&quot;gateway&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-ui-gw&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#ffffff;strokeColor=none;spacing=4;&quot; value=&quot;HTTP :8000 · UI + /api/*&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;34&quot; width=&quot;210&quot; x=&quot;245&quot; y=&quot;283&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-gw-core&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;gateway&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=0.4074074074074074;exitY=1.0;entryX=0.5;entryY=0.0;&quot; target=&quot;core&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-gw-core&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#5b21b6;fillColor=#ffffff;strokeColor=none;spacing=4;&quot; value=&quot;Proxy /api/* &amp;amp;amp; /healthz → app:8000&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;36&quot; width=&quot;250&quot; x=&quot;175&quot; y=&quot;458&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-core-yt&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;core&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.8636363636363636;exitY=0.0;entryX=0.5;entryY=0.0;&quot; target=&quot;catalog&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;&gt;
+            &lt;Array as=&quot;points&quot;&gt;
+              &lt;mxPoint x=&quot;460&quot; y=&quot;548&quot; /&gt;
+              &lt;mxPoint x=&quot;1460&quot; y=&quot;548&quot; /&gt;
+            &lt;/Array&gt;
+          &lt;/mxGeometry&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-core-yt&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#f8fafc;strokeColor=none;spacing=4;&quot; value=&quot;GET /search?q=... → http://youtube:8081&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;32&quot; width=&quot;280&quot; x=&quot;740&quot; y=&quot;532&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-core-mod&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;core&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;&quot; target=&quot;moderation&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-core-mod&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#f8fafc;strokeColor=none;spacing=4;&quot; value=&quot;POST /moderate&amp;#xa;llm:8082&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;46&quot; width=&quot;124&quot; x=&quot;528&quot; y=&quot;672&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-mod-yt&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;moderation&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#b85450;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;&quot; target=&quot;catalog&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-mod-yt&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontStyle=1;fontColor=#991b1b;fillColor=#fff1f2;strokeColor=#fca5a5;spacing=4;&quot; value=&quot;GET /lookup?id=...&amp;#xa;Verified metadata&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;48&quot; width=&quot;132&quot; x=&quot;1104&quot; y=&quot;671&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-core-db&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;core&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;&quot; target=&quot;db&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-core-db&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#dae8fc;strokeColor=none;spacing=4;&quot; value=&quot;GET/PUT/DELETE /rooms → db:8084&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;34&quot; width=&quot;250&quot; x=&quot;175&quot; y=&quot;808&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-db-files&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;db&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;&quot; target=&quot;db-files&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-db-files&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#dae8fc;strokeColor=none;spacing=4;&quot; value=&quot;Atomic JSON I/O&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;30&quot; width=&quot;150&quot; x=&quot;225&quot; y=&quot;1030&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-mod-data&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;moderation&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;&quot; target=&quot;llm-data&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-mod-data&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#d5e8d4;strokeColor=none;spacing=4;&quot; value=&quot;Verdict cache + model volume&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;34&quot; width=&quot;220&quot; x=&quot;770&quot; y=&quot;808&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-mod-ollama&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;llm-data&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;&quot; target=&quot;ollama&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-mod-ollama&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#d5e8d4;strokeColor=none;spacing=4;&quot; value=&quot;POST /api/chat&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;30&quot; width=&quot;140&quot; x=&quot;810&quot; y=&quot;1030&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-yt-data&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;catalog&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;&quot; target=&quot;yt-data&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-yt-data&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#ffe6cc;strokeColor=none;spacing=4;&quot; value=&quot;Metadata cache + API key&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;34&quot; width=&quot;200&quot; x=&quot;1360&quot; y=&quot;808&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;edge-yt-api&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;yt-data&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#53657a;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;&quot; target=&quot;yt-api&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lbl-yt-api&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=20;whiteSpace=wrap;html=0;align=center;verticalAlign=middle;fontFamily=Segoe UI;fontSize=14;fontColor=#405167;fillColor=#ffe6cc;strokeColor=none;spacing=4;&quot; value=&quot;search.list / videos.list&quot; vertex=&quot;1&quot;&gt;
+          &lt;mxGeometry height=&quot;30&quot; width=&quot;180&quot; x=&quot;1370&quot; y=&quot;1030&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+      &lt;/root&gt;
+    &lt;/mxGraphModel&gt;
+  &lt;/diagram&gt;
+&lt;/mxfile&gt;
+">
+  <defs>
+    <marker id="arrow-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#53657a"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#b85450"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1760" height="1270" fill="#ffffff"/>
+
+  <!-- Title & Subtitle -->
+  <text x="40" y="42" font-family="Segoe UI, Arial, sans-serif" font-size="25" font-weight="700" fill="#1e293b">MusicJam · Bounded Contexts &amp; Microservice Architecture · Checkpoint 4</text>
+  <text x="40" y="74" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#475569">API Gateway separates UI from backend services · Services call each other directly over HTTP (no gateway) · Each service owns its own data</text>
+
+  <!-- Internal Docker Network Container -->
+  <rect x="40" y="505" width="1680" height="725" rx="14" ry="14" fill="#f8fafc" stroke="#475569" stroke-width="1.5" stroke-dasharray="8 6"/>
+  <text x="60" y="534" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#334155">Internal Docker Network — Direct HTTP between Microservices (No API Gateway)</text>
+
+  <!-- Bounded Context Background Zones -->
+  <rect x="60" y="585" width="480" height="630" rx="14" ry="14" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1"/>
+  <rect x="640" y="585" width="480" height="630" rx="14" ry="14" fill="#d5e8d4" stroke="#82b366" stroke-width="1"/>
+  <rect x="1220" y="585" width="480" height="630" rx="14" ry="14" fill="#ffe6cc" stroke="#d79b00" stroke-width="1"/>
+
+  <!-- Tier 1: UI & External Player -->
+  <rect x="80" y="105" width="540" height="160" rx="18" ry="18" fill="#f5eef9" stroke="#9370ac" stroke-width="1.5"/>
+  <text x="100" y="143" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#203047">Host &amp; Guest UI + Integrated Player</text>
+  <text x="100" y="177" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Browser (HTML / CSS / JS + YT.Player)</text>
+  <text x="100" y="201" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">User interactions, QR join &amp; host playback</text>
+  <text x="100" y="225" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Browser state: userId cookie &amp; localStorage name</text>
+  <rect x="1160" y="105" width="520" height="160" rx="18" ry="18" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+  <text x="1180" y="143" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#203047">YouTube IFrame Player API</text>
+  <text x="1180" y="177" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">External system</text>
+  <text x="1180" y="201" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Loads &amp; plays video on host device</text>
+  <text x="1180" y="225" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Provides playback end &amp; embed error events</text>
+
+  <!-- Tier 2: API Gateway -->
+  <rect x="80" y="335" width="540" height="110" rx="16" ry="16" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="100" y="373" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#203047">API Gateway · musicjam-frontend (Nginx :8000 → :80)</text>
+  <text x="100" y="407" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#203047">Serves static frontend · Proxies /api/* &amp; /healthz → http://app:8000</text>
+  <text x="100" y="431" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#203047">Forwards Host &amp; X-Forwarded-Host headers for LAN QR code URLs</text>
+
+  <!-- Tier 3 Row A: Backend Microservices -->
+  <rect x="80" y="605" width="440" height="180" rx="18" ry="18" fill="#eef4ff" stroke="#5d83ba" stroke-width="1.5"/>
+  <text x="100" y="643" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#203047">Jam Session Core (musicjam-app :8000)</text>
+  <text x="100" y="677" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Room · Member · Genre · SongRequest</text>
+  <text x="100" y="701" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Ordered queue &amp; host-only skip / admission</text>
+  <text x="100" y="725" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Orchestrates search, moderation &amp; persistence</text>
+  <rect x="660" y="605" width="440" height="180" rx="18" ry="18" fill="#eef7eb" stroke="#66945e" stroke-width="1.5"/>
+  <text x="680" y="643" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#203047">Moderation (musicjam-llm :8082)</text>
+  <text x="680" y="677" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Assesses genre fit (yes / no + reason)</text>
+  <text x="680" y="701" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Fetches verified metadata from Search Catalog</text>
+  <text x="680" y="725" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Failure degrades to host review in Core</text>
+  <rect x="1240" y="605" width="440" height="180" rx="18" ry="18" fill="#fff4e6" stroke="#c27a25" stroke-width="1.5"/>
+  <text x="1260" y="643" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#203047">Search Catalog (musicjam-youtube :8081)</text>
+  <text x="1260" y="677" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">GET /search?q=... (embed-safe ranking)</text>
+  <text x="1260" y="701" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">GET /lookup?id=... (verified title &amp; channel)</text>
+  <text x="1260" y="725" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Filters age-restricted &amp; geo-blocked tracks</text>
+
+  <!-- Tier 3 Row B: Service Data / Persistence -->
+  <rect x="80" y="865" width="440" height="150" rx="18" ry="18" fill="#eef4ff" stroke="#5d83ba" stroke-width="1.5"/>
+  <text x="100" y="903" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#203047">Room Persistence (musicjam-db :8084)</text>
+  <text x="100" y="937" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">GET / PUT / DELETE /rooms/{{code}}</text>
+  <text x="100" y="961" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Atomic JSON persistence (*.tmp → rename)</text>
+  <rect x="660" y="865" width="440" height="150" rx="18" ry="18" fill="#eef7eb" stroke="#66945e" stroke-width="1.5"/>
+  <text x="680" y="903" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#203047">Moderation Owned Data</text>
+  <text x="680" y="937" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">In-memory verdict cache (30m TTL, max 512)</text>
+  <text x="680" y="961" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Docker volume: ollama_models (qwen3:4b)</text>
+  <rect x="1240" y="865" width="440" height="150" rx="18" ry="18" fill="#fff4e6" stroke="#c27a25" stroke-width="1.5"/>
+  <text x="1260" y="903" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#203047">Search Catalog Owned Data</text>
+  <text x="1260" y="937" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">In-memory metadata cache (30m TTL, max 512)</text>
+  <text x="1260" y="961" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Exclusive YOUTUBE_API_KEY &amp; region config</text>
+
+  <!-- Tier 3 Row C: Underlying Storage / External APIs -->
+  <rect x="80" y="1075" width="440" height="120" rx="16" ry="16" fill="#ffffff" stroke="#5d83ba" stroke-width="1.5"/>
+  <text x="100" y="1113" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#203047">Room JSON Files (./database/)</text>
+  <text x="100" y="1147" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">room_&lt;uuid&gt;.json (members, queue, requests)</text>
+  <rect x="660" y="1075" width="440" height="120" rx="16" ry="16" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+  <text x="680" y="1113" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#203047">Ollama Local Runtime (127.0.0.1:11434)</text>
+  <text x="680" y="1147" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">Bundled in musicjam-llm · Structured JSON</text>
+  <rect x="1240" y="1075" width="440" height="120" rx="16" ry="16" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+  <text x="1260" y="1113" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#203047">YouTube Data API v3 (External)</text>
+  <text x="1260" y="1147" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#203047">search.list &amp; videos.list</text>
+
+  <!-- Arrows -->
+  <!-- UI <-> IFrame -->
+  <line x1="628" y1="185" x2="1152" y2="185" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="780" y="168" width="220" height="34" rx="8" ry="8" fill="#ffffff" stroke="none" stroke-width="1"/>
+  <text x="890.0" y="190.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">Controls / playback events</text>
+
+  <!-- UI <-> Gateway -->
+  <line x1="350" y1="273" x2="350" y2="327" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="245" y="283" width="210" height="34" rx="8" ry="8" fill="#ffffff" stroke="none" stroke-width="1"/>
+  <text x="350.0" y="305.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">HTTP :8000 · UI + /api/*</text>
+
+  <!-- Gateway <-> Core -->
+  <line x1="300" y1="453" x2="300" y2="597" stroke="#7c3aed" stroke-width="2" marker-start="url(#arrow-purple)" marker-end="url(#arrow-purple)"/>
+  <rect x="175" y="458" width="250" height="36" rx="8" ry="8" fill="#ffffff" stroke="none" stroke-width="1"/>
+  <text x="300.0" y="481.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#5b21b6">Proxy /api/* &amp; /healthz → app:8000</text>
+
+  <!-- Core <-> Search Catalog (top arch) -->
+  <path d="M 460 597 L 460 558 Q 460 548 470 548 L 1450 548 Q 1460 548 1460 558 L 1460 597" fill="none" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="740" y="532" width="280" height="32" rx="8" ry="8" fill="#f8fafc" stroke="none" stroke-width="1"/>
+  <text x="880.0" y="553.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">GET /search?q=... → http://youtube:8081</text>
+
+  <!-- Core <-> Moderation -->
+  <line x1="528" y1="695" x2="652" y2="695" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="528" y="672" width="124" height="46" rx="8" ry="8" fill="#f8fafc" stroke="none" stroke-width="1"/>
+  <text x="590.0" y="691.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">POST /moderate</text>
+  <text x="590.0" y="708.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">llm:8082</text>
+
+  <!-- Highlighted: Moderation -> Search Catalog -->
+  <line x1="1100" y1="695" x2="1230" y2="695" stroke="#b85450" stroke-width="3" marker-end="url(#arrow-red)"/>
+  <rect x="1100" y="671" width="132" height="48" rx="8" ry="8" fill="#fff1f2" stroke="#fca5a5" stroke-width="1"/>
+  <text x="1166.0" y="691.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#991b1b">GET /lookup?id=...</text>
+  <text x="1166.0" y="708.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#991b1b">Verified metadata</text>
+
+  <!-- Vertical internal arrows -->
+  <line x1="300" y1="793" x2="300" y2="857" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="175" y="808" width="250" height="34" rx="8" ry="8" fill="#dae8fc" stroke="none" stroke-width="1"/>
+  <text x="300.0" y="830.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">GET/PUT/DELETE /rooms → db:8084</text>
+
+  <line x1="300" y1="1023" x2="300" y2="1067" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="225" y="1030" width="150" height="30" rx="8" ry="8" fill="#dae8fc" stroke="none" stroke-width="1"/>
+  <text x="300.0" y="1050.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">Atomic JSON I/O</text>
+
+  <line x1="880" y1="793" x2="880" y2="857" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="770" y="808" width="220" height="34" rx="8" ry="8" fill="#d5e8d4" stroke="none" stroke-width="1"/>
+  <text x="880.0" y="830.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">Verdict cache + model volume</text>
+
+  <line x1="880" y1="1023" x2="880" y2="1067" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="810" y="1030" width="140" height="30" rx="8" ry="8" fill="#d5e8d4" stroke="none" stroke-width="1"/>
+  <text x="880.0" y="1050.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">POST /api/chat</text>
+
+  <line x1="1460" y1="793" x2="1460" y2="857" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="1360" y="808" width="200" height="34" rx="8" ry="8" fill="#ffe6cc" stroke="none" stroke-width="1"/>
+  <text x="1460.0" y="830.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">Metadata cache + API key</text>
+
+  <line x1="1460" y1="1023" x2="1460" y2="1067" stroke="#53657a" stroke-width="2" marker-start="url(#arrow-slate)" marker-end="url(#arrow-slate)"/>
+  <rect x="1370" y="1030" width="180" height="30" rx="8" ry="8" fill="#ffe6cc" stroke="none" stroke-width="1"/>
+  <text x="1460.0" y="1050.0" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#405167">search.list / videos.list</text>
+</svg>
