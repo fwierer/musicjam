@@ -3,16 +3,55 @@ services:
     build: .
     container_name: musicjam-app
     ports:
-      - "8000:8000"
-    env_file:
-      - .env
+      - "0.0.0.0:8000:8000"
     environment:
       - FRONTEND_DIR=/app/frontend
       - DATA_DIR=/app/database
-      - OLLAMA_URL=http://ollama:11434
-      - PUBLIC_ORIGIN=${PUBLIC_ORIGIN:-http://localhost:8000}
+      - LLM_URL=http://llm:8082
+      - YOUTUBE_URL=http://youtube:8081
+      - PLAYER_URL=http://player:8083
+      - PUBLIC_ORIGIN=${PUBLIC_ORIGIN:-}
+      - HOST_IP=${HOST_IP:-}
     volumes:
       - ./database:/app/database
+    depends_on:
+      - llm
+      - youtube
+      - player
+    restart: unless-stopped
+
+  youtube:
+    build: ./backend/YouTube
+    container_name: musicjam-youtube
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    environment:
+      - PORT=8081
+    restart: unless-stopped
+
+  player:
+    build: ./backend/Player
+    container_name: musicjam-player
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - YOUTUBE_URL=http://youtube:8081
+    depends_on:
+      - youtube
+    restart: unless-stopped
+
+  llm:
+    build: ./backend/LLM
+    container_name: musicjam-llm
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:4b}
     depends_on:
       - ollama
     restart: unless-stopped

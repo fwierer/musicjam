@@ -1,4 +1,5 @@
 const startButton = document.getElementById("start-playback");
+const skipButton = document.getElementById("skip-song");
 const playbackStatus = document.getElementById("playback-status");
 const memberList = createMemberList(document.getElementById("member-list"), async (member) => {
   if (!confirm(`Remove ${member.name} from the jam?`)) return;
@@ -13,19 +14,23 @@ const memberList = createMemberList(document.getElementById("member-list"), asyn
 
 let code;
 let roomId;
-let player;
-let playerReady = false;
-let apiReady = false;
-let started = false;
-let currentSongId = "";
-let playingSongId = "";
-let finishedSongId = "";
 let latestQueue = [];
 let refreshing = false;
 let advancing = false;
 let deciding = false;
 let queueVersion = 0;
 let offlineFailures = 0;
+
+const hostPlayer = createHostPlayer({
+  startButton,
+  skipButton,
+  statusEl: playbackStatus,
+  titleEl: document.getElementById("song-title"),
+  metaEl: document.getElementById("song-meta"),
+  frameEl: document.getElementById("player-frame"),
+  onFinishSong: advanceQueue,
+  onSkipSong: skipCurrentSong,
+});
 
 const showSearchStatus = initSongSearch(async () => {
   queueVersion++;
@@ -34,10 +39,19 @@ const showSearchStatus = initSongSearch(async () => {
 
 init();
 
+function resolveJoinOrigin(serverOrigin) {
+  const isLoopbackUrl = (url) =>
+    !url || /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(url);
+  const browserIsLan = !/^(localhost|127\.0\.0\.1|\[::1\])$/i.test(location.hostname);
+  if (isLoopbackUrl(serverOrigin) && browserIsLan) {
+    return location.origin;
+  }
+  return serverOrigin || location.origin;
+}
+
 async function init() {
   const session = await loadSessionWithRetry(2);
   if (!session) {
-    // Either redirected to offline.html or no active session
     if (!location.pathname.endsWith("/offline.html")) {
       location.href = "/";
     }
@@ -53,9 +67,7 @@ async function init() {
   showGenre(session.genre);
   showRoomName(session.roomName);
 
-  // Use session.joinOrigin (LAN IP from backend) when available so phones scanning
-  // the QR code connect to the host's LAN IP instead of their own localhost.
-  const joinOrigin = session.joinOrigin || location.origin;
+  const joinOrigin = resolveJoinOrigin(session.joinOrigin);
   const joinTarget = session.roomId || session.id || code;
   const joinUrl = joinOrigin + "/join.html?code=" + encodeURIComponent(joinTarget);
 
@@ -63,30 +75,26 @@ async function init() {
 
   const localhostWarning = document.getElementById("localhost-warning");
   if (localhostWarning) {
-    const isLoopback = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(joinOrigin);
-    localhostWarning.hidden = !isLoopback;
-    if (isLoopback) {
+    const isLoopbackJoin = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(joinOrigin);
+    if (isLoopbackJoin) {
+      localhostWarning.hidden = false;
       localhostWarning.textContent =
-        "Note: Open this page using your computer's local network IP (e.g. 192.168.x.x) so phones can scan the QR code.";
+        "Open this page using your computer's network IP (e.g. http://192.168.x.x:8000) or set HOST_IP in .env so phones can scan the QR code.";
+    } else {
+      localhostWarning.hidden = true;
     }
   }
 
   new QRCode(document.getElementById("qr-code"), { text: joinUrl, width: 260, height: 260 });
 
-  window.onYouTubeIframeAPIReady = () => {
-    apiReady = true;
-    syncPlayer();
-  };
-  const script = document.createElement("script");
-  script.src = "https://www.youtube.com/iframe_api";
-  document.body.append(script);
+  hostPlayer.init();
 
   await refresh();
   setInterval(refresh, 3000);
 }
 
 async function refresh() {
-  if (refreshing || advancing || deciding) return;
+  if (refreshing || advancing || deciding || hostPlayer.isAdvancing()) return;
   refreshing = true;
   const version = queueVersion;
   try {
@@ -158,38 +166,7 @@ async function decideRequest(requestId, decision) {
 function updateQueue(queue) {
   latestQueue = queue;
   renderQueue(queue);
-  syncPlayer();
-}
-
-function syncPlayer() {
-  if (advancing) return;
-  const song = latestQueue[0];
-  if (!song) {
-    if (player) {
-      player.destroy();
-      player = null;
-      playerReady = false;
-      document.getElementById("player-frame").innerHTML =
-        '<div id="player" class="d-flex align-items-center justify-content-center text-body-secondary">Waiting for a guest to pick a song</div>';
-    }
-    currentSongId = "";
-    playingSongId = "";
-    finishedSongId = "";
-    startButton.hidden = true;
-    document.getElementById("song-title").textContent = "Nothing yet";
-    document.getElementById("song-meta").textContent = "";
-    return;
-  }
-  if (finishedSongId === song.id) {
-    advanceQueue();
-    return;
-  }
-  if (!apiReady || song.id === currentSongId || (player && !playerReady)) return;
-  currentSongId = song.id;
-  playingSongId = "";
-  finishedSongId = "";
-  playbackStatus.textContent = "";
-  playSong(song);
+  hostPlayer.sync(latestQueue);
 }
 
 function showGuests(members) {
@@ -198,56 +175,8 @@ function showGuests(members) {
   memberList.show(guests);
 }
 
-function playSong(song) {
-  document.getElementById("song-title").textContent = song.title;
-  document.getElementById("song-meta").textContent = song.channel;
-
-  if (!player) {
-    startButton.disabled = true;
-    player = new YT.Player("player", {
-      videoId: song.videoId,
-      playerVars: { playsinline: 1, origin: location.origin },
-      events: {
-        onReady: (event) => {
-          if (event.target !== player) return;
-          playerReady = true;
-          startButton.disabled = false;
-          startButton.hidden = started;
-          syncPlayer();
-          if (started && player) player.playVideo();
-        },
-        onStateChange: (event) => {
-          if (event.target !== player || !currentSongId) return;
-          if (event.data === YT.PlayerState.PLAYING) {
-            started = true;
-            playingSongId = currentSongId;
-            startButton.hidden = true;
-          }
-          if (event.data === YT.PlayerState.ENDED && playingSongId === currentSongId) {
-            playingSongId = "";
-            finishedSongId = currentSongId;
-            advanceQueue();
-          }
-        },
-        onAutoplayBlocked: (event) => {
-          if (event.target !== player) return;
-          started = false;
-          startButton.hidden = false;
-        },
-        onError: () => {
-          playbackStatus.textContent = "This video could not be played.";
-        },
-      },
-    });
-  } else if (started) {
-    player.loadVideoById(song.videoId);
-  } else {
-    player.cueVideoById(song.videoId);
-  }
-}
-
-async function advanceQueue() {
-  if (advancing || !finishedSongId) return;
+async function advanceQueue(songId) {
+  if (advancing || !songId) return false;
   advancing = true;
   queueVersion++;
   const version = queueVersion;
@@ -258,30 +187,69 @@ async function advanceQueue() {
       {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ songId: finishedSongId }),
+        body: JSON.stringify({ songId }),
       },
       ACTION_TIMEOUT_MS
     );
+    if (response.status === 409) {
+      advancing = false;
+      await refresh();
+      return true;
+    }
     if (!response.ok) throw new Error("Could not advance queue.");
     queue = (await response.json()) ?? [];
-    finishedSongId = "";
     playbackStatus.textContent = "";
   } catch (error) {
     playbackStatus.textContent = error.isTimeout
       ? "Advancing queue timed out. Retrying..."
       : "Could not advance queue. Retrying...";
+    return false;
   } finally {
     advancing = false;
   }
   if (queue && version === queueVersion) updateQueue(queue);
   else if (queue) await refresh();
+  return true;
 }
 
-startButton.addEventListener("click", () => {
-  if (!playerReady || !currentSongId) return;
-  started = true;
-  player.playVideo();
-});
+async function skipCurrentSong(songId, reason = "host") {
+  if (advancing || !songId) return false;
+  advancing = true;
+  queueVersion++;
+  const version = queueVersion;
+  let queue;
+  try {
+    const response = await fetchWithTimeout(
+      "/api/room/skip",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ songId, reason }),
+      },
+      ACTION_TIMEOUT_MS
+    );
+    if (response.status === 409) {
+      advancing = false;
+      await refresh();
+      return true;
+    }
+    if (!response.ok) throw new Error("Could not skip song.");
+    queue = (await response.json()) ?? [];
+    if (reason === "host") {
+      playbackStatus.textContent = "";
+    }
+  } catch (error) {
+    playbackStatus.textContent = error.isTimeout
+      ? "Skipping song timed out. Please try again."
+      : "Could not skip song. Please try again.";
+    return false;
+  } finally {
+    advancing = false;
+  }
+  if (queue && version === queueVersion) updateQueue(queue);
+  else if (queue) await refresh();
+  return true;
+}
 
 // Closing the room on the server is not implemented yet.
 document.getElementById("end-session").addEventListener("click", () => {

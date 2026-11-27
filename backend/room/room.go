@@ -120,6 +120,22 @@ func (room *Room) IsHost(userID string) bool {
 	return room.hostID == userID
 }
 
+// SkipCurrentSong removes the active song (queue[0]) from the room's playback queue.
+// When songID is non-empty, it ensures queue[0] still matches songID so duplicate or
+// delayed skip/error events cannot remove the next song.
+func (room *Room) SkipCurrentSong(songID string) (Song, error) {
+	if len(room.Queue) == 0 {
+		return Song{}, ErrQueueEmpty
+	}
+	if songID != "" && room.Queue[0].ID != songID {
+		return Song{}, ErrSongChanged
+	}
+	skipped := room.Queue[0]
+	room.Queue = room.Queue[1:]
+	saveToJsonFile(room)
+	return skipped, nil
+}
+
 // GenerateUUIDv4 generates a random RFC 4122 UUID v4 string using crypto/rand
 func GenerateUUIDv4() string {
 	var b [16]byte

@@ -14,11 +14,13 @@ const (
 )
 
 var (
-	ErrNameRequired     = errors.New("please enter a name")
-	ErrNameTooLong      = fmt.Errorf("name can be at most %d characters", MaxNameLength)
-	ErrRoomNameTooLong  = fmt.Errorf("room name can be at most %d characters", MaxRoomNameLength)
-	ErrMemberNotFound   = errors.New("member not found")
-	ErrRemoveHost       = errors.New("the host can't be removed")
+	ErrNameRequired    = errors.New("please enter a name")
+	ErrNameTooLong     = fmt.Errorf("name can be at most %d characters", MaxNameLength)
+	ErrRoomNameTooLong = fmt.Errorf("room name can be at most %d characters", MaxRoomNameLength)
+	ErrMemberNotFound  = errors.New("member not found")
+	ErrRemoveHost      = errors.New("the host can't be removed")
+	ErrQueueEmpty      = errors.New("queue is empty")
+	ErrSongChanged     = errors.New("current song has changed")
 )
 
 // Song in a room's queue

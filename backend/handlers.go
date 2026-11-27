@@ -1,23 +1,36 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
+	"time"
 
 	"github.com/FullStackKlerant/musicjam/backend/room"
 )
 
 const cookieMaxAge = 24 * 60 * 60 // 24 hours in seconds
 
-// handlers
+var (
+	classifier     songClassifier = newLLMClient()
+	verifySong                    = lookupYouTubeSong
+	videoIDPattern                = regexp.MustCompile(`^[A-Za-z0-9_-]{11}$`)
+)
+
 func registerHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/api/youtube/search", handleYouTubeSearch)
+	mux.HandleFunc("/api/player/fallback", handlePlayerFallback)
+	mux.HandleFunc("/healthz", handleHealthz)
 	mux.HandleFunc("/api/room/create", createNewRoom)
 	mux.HandleFunc("/api/room/join", joinRoom)
 	mux.HandleFunc("/api/room/queue", handleQueue)
+	mux.HandleFunc("/api/room/skip", skipSong)
 	mux.HandleFunc("/api/genres", getGenres)
 	mux.HandleFunc("/api/room/requests", handleSongRequests)
 	mux.HandleFunc("/api/room/requests/decision", decideSongRequest)
@@ -29,6 +42,12 @@ func registerHandlers(mux *http.ServeMux) {
 		frontendDir = "../frontend"
 	}
 	mux.Handle("/", http.FileServer(http.Dir(frontendDir)))
+}
+
+func handleHealthz(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }
 
 // getUserID returns the user's ID from their cookie, or creates a new user.
@@ -104,7 +123,6 @@ func memberName(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return name, true
 }
 
-// creates new room
 func createNewRoom(w http.ResponseWriter, r *http.Request) {
 	genre, err := room.CleanGenre(r.URL.Query().Get("genre"))
 	if err != nil {
@@ -131,6 +149,7 @@ func createNewRoom(w http.ResponseWriter, r *http.Request) {
 	rooms[newRoom.Code()] = newRoom
 	log.Printf("room created\n%s", newRoom)
 	sessions[userID] = &Session{Name: name, RoomCode: newRoom.Code(), IsHost: true}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"code": newRoom.Code(), "name": newRoom.Name, "isHost": true})
 }
 
@@ -143,16 +162,15 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 	rm, ok := rooms[code]
-	// if room not found throw error
 	if !ok {
 		http.Error(w, "room not found", http.StatusNotFound)
 		return
 	}
-	// get user from current session if there is none than create one
 	userID := getUserID(w, r)
 	rm.AddMember(userID, name)
 	log.Printf("%q joined\n%s", name, rm)
 	sessions[userID] = &Session{Name: name, RoomCode: code, IsHost: rm.IsHost(userID)}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"code": code, "name": rm.Name, "isHost": rm.IsHost(userID)})
 }
 
@@ -161,12 +179,11 @@ func getRoomMembers(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
 	currentRoom, ok := rooms[code]
-	// if room not found throw error
 	if !ok {
 		http.Error(w, "room not found", http.StatusNotFound)
 		return
 	}
-	// A list instead of the map, whose keys are the members' secret user IDs
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(currentRoom.MemberList())
 }
 
@@ -200,18 +217,16 @@ func removeRoomMember(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	// Ending their session locks them out of the room. Only if it still belongs to this room,
-	// they may have joined another one since.
 	if s := sessions[removed.UserID]; s != nil && s.RoomCode == host.room.Code() {
 		delete(sessions, removed.UserID)
 	}
 	releaseRoomRequests(host.room)
 	host.room.Save()
 	log.Printf("%q was removed\n%s", removed.Name, host.room)
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(host.room.MemberList())
 }
 
-// returns the session of the current user
 func getSession(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie("userId")
 	if err != nil {
@@ -230,14 +245,15 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "room not found", http.StatusNotFound)
 		return
 	}
-	json.NewEncoder(w).Encode(
-		map[string]any{
-			"name":       currentSession.Name,
-			"roomCode":   currentSession.RoomCode,
-			"roomName":   rm.Name,
-			"isHost":     currentSession.IsHost,
-			"genre":      rm.Genre,
-			"joinOrigin": getJoinOrigin()})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"name":       currentSession.Name,
+		"roomCode":   currentSession.RoomCode,
+		"roomName":   rm.Name,
+		"isHost":     currentSession.IsHost,
+		"genre":      rm.Genre,
+		"joinOrigin": getJoinOrigin(r),
+	})
 }
 
 func handleQueue(w http.ResponseWriter, r *http.Request) {
@@ -256,6 +272,7 @@ func handleQueue(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(rm.Queue)
 	case http.MethodDelete:
 		if !rm.IsHost(c.userID) {
@@ -269,17 +286,243 @@ func handleQueue(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "missing song ID", http.StatusBadRequest)
 			return
 		}
-		// A delayed or repeated end event must not remove the next song.
-		if len(rm.Queue) == 0 || rm.Queue[0].ID != finished.SongID {
+		if _, err := rm.SkipCurrentSong(finished.SongID); err != nil {
 			http.Error(w, "current song has changed", http.StatusConflict)
 			return
 		}
-		rm.Queue = rm.Queue[1:]
-		rm.Save()
 		log.Printf("song finished\n%s", rm)
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(rm.Queue)
 	default:
 		w.Header().Set("Allow", "GET, POST, DELETE")
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+// skipSong lets ONLY the room host skip the currently playing song (manually or when
+// YouTube blocks embedded playback due to copyright / embed restrictions).
+func skipSong(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", "POST")
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var body struct {
+		SongID string `json:"songId"`
+		Reason string `json:"reason"`
+	}
+	if r.Body != nil {
+		dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096))
+		if err := dec.Decode(&body); err != nil && !errors.Is(err, io.EOF) {
+			http.Error(w, "invalid skip request", http.StatusBadRequest)
+			return
+		}
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	host, ok := currentHost(w, r)
+	if !ok {
+		return
+	}
+
+	skipped, err := host.room.SkipCurrentSong(strings.TrimSpace(body.SongID))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	reason := strings.TrimSpace(body.Reason)
+	if reason == "" {
+		reason = "host"
+	}
+	log.Printf("song skipped (%s): %q\n%s", reason, skipped.Title, host.room)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(host.room.Queue)
+}
+
+func getGenres(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(room.Genres)
+}
+
+func handleSongRequests(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		submitSong(w, r, false)
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	c, ok := currentCaller(w, r)
+	if !ok {
+		return
+	}
+	writeRequestState(w, c)
+}
+
+func writeRequestState(w http.ResponseWriter, c caller) {
+	requests := make([]*room.SongRequest, 0)
+	for _, request := range c.room.Requests {
+		if c.room.IsHost(c.userID) || request.UserID == c.userID {
+			requests = append(requests, request)
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"roomName": c.room.Name,
+		"genre":    c.room.Genre,
+		"queue":    c.room.Queue,
+		"requests": requests,
+	})
+}
+
+func submitSong(w http.ResponseWriter, r *http.Request, legacy bool) {
+	var song room.Song
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&song); err != nil {
+		http.Error(w, "invalid song", http.StatusBadRequest)
+		return
+	}
+	if !videoIDPattern.MatchString(song.VideoID) || song.Title == "" || len(song.Title) > 1000 || len(song.Channel) > 500 {
+		http.Error(w, "invalid song data", http.StatusBadRequest)
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	c, ok := currentCaller(w, r)
+	if !ok {
+		return
+	}
+	song.ID = room.GenerateUUIDv4()
+	request := &room.SongRequest{
+		ID: song.ID, Song: song, UserID: c.userID, RequestedBy: c.session.Name,
+		Status: room.Pending, Reason: "Checking the room genre.",
+	}
+	c.room.Requests = append(c.room.Requests, request)
+	if c.room.Genre == "Any" {
+		request.Status, request.Reason = room.Allow, "No genre filter."
+		releaseRoomRequests(c.room)
+	} else if !c.room.ProcessingRequests {
+		c.room.ProcessingRequests = true
+		go processSongRequests(c.room, classifier, verifySong)
+	}
+	c.room.Save()
+	w.Header().Set("Content-Type", "application/json")
+	if legacy {
+		json.NewEncoder(w).Encode(c.room.Queue)
+	} else {
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(request)
+	}
+}
+
+// One worker per room preserves admission order; network calls never hold mu.
+func processSongRequests(rm *room.Room, engine songClassifier, lookup func(context.Context, string) (room.Song, error)) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("panic in processSongRequests:", r)
+			mu.Lock()
+			rm.ProcessingRequests = false
+			mu.Unlock()
+		}
+	}()
+	for {
+		mu.Lock()
+		var request *room.SongRequest
+		for _, candidate := range rm.Requests {
+			if candidate.Status == room.Pending {
+				request = candidate
+				break
+			}
+		}
+		if request == nil {
+			rm.ProcessingRequests = false
+			mu.Unlock()
+			return
+		}
+		song, genre := request.Song, rm.Genre
+		mu.Unlock()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+		verified, err := lookup(ctx, song.VideoID)
+		decision := verdict{room.Review, "YouTube metadata could not be verified. Host review required."}
+		if err == nil {
+			verified.ID = song.ID
+			decision, err = engine.Classify(ctx, verified, genre)
+			if err != nil || !room.ValidDecision(decision.Decision) || (decision.Decision != room.Allow && decision.Reason == "") {
+				decision = verdict{room.Review, "AI check unavailable or invalid. Host review required."}
+			}
+		}
+		cancel()
+
+		mu.Lock()
+		if err == nil || verified.VideoID != "" {
+			request.Song = verified
+			request.Song.ID = song.ID
+		}
+		session := sessions[request.UserID]
+		if rooms[rm.Code()] != rm || session == nil || session.RoomCode != rm.Code() {
+			decision = verdict{room.Block, "The requester is no longer in this room."}
+		}
+		request.Status, request.Reason = decision.Decision, decision.Reason
+		releaseRoomRequests(rm)
+		rm.Save()
+		mu.Unlock()
+	}
+}
+
+func decideSongRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var body struct {
+		RequestID string `json:"requestId"`
+		Decision  string `json:"decision"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body); err != nil {
+		http.Error(w, "invalid decision", http.StatusBadRequest)
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	c, ok := currentHost(w, r)
+	if !ok {
+		return
+	}
+	if request := c.room.Request(body.RequestID); request != nil && body.Decision == room.Allow {
+		session := sessions[request.UserID]
+		if session == nil || session.RoomCode != c.room.Code() {
+			http.Error(w, "requester is no longer in this room", http.StatusConflict)
+			return
+		}
+	}
+	releaseRoomRequests(c.room)
+	if err := c.room.DecideRequest(body.RequestID, body.Decision); err != nil {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+	c.room.Save()
+	writeRequestState(w, c)
+}
+
+func releaseRoomRequests(rm *room.Room) {
+	for _, request := range rm.Requests {
+		if request.Queued || request.Status == room.Block {
+			continue
+		}
+		session := sessions[request.UserID]
+		if session == nil || session.RoomCode != rm.Code() {
+			request.Status, request.Reason = room.Block, "The requester is no longer in this room."
+		}
+	}
+	rm.ReleaseApproved()
 }

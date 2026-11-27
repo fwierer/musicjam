@@ -31,7 +31,13 @@ async function init() {
   showGenre(session.genre);
   showRoomName(session.roomName);
 
-  const joinOrigin = session.joinOrigin || location.origin;
+  const isLoopbackUrl = (url) =>
+    !url || /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(url);
+  const browserIsLan = !/^(localhost|127\.0\.0\.1|\[::1\])$/i.test(location.hostname);
+  const joinOrigin =
+    isLoopbackUrl(session.joinOrigin) && browserIsLan
+      ? location.origin
+      : (session.joinOrigin || location.origin);
   const joinUrl = joinOrigin + "/join.html?code=" + encodeURIComponent(code);
   document.getElementById("join-url").textContent = joinUrl;
   new QRCode(document.getElementById("qr-code"), { text: joinUrl, width: 200, height: 200 });

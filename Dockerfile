@@ -1,8 +1,7 @@
-# Stage 1: Build the Go monolith
+# Stage 1: Build the main Go application
 FROM golang:1.26-alpine AS builder
 WORKDIR /src/backend
-COPY backend/go.mod backend/go.sum* ./
-RUN go mod download
+COPY backend/go.mod ./
 COPY backend/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/musicjam .
 
