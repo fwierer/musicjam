@@ -4,6 +4,7 @@ import (
 	crand "crypto/rand"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -225,18 +226,79 @@ func saveToJsonFile(room *Room) {
 	}
 	room.mutex.Unlock()
 
-	filename := filepath.Join(DataDir, "room_"+room.roomCode+".json")
-	tmpfilename := filename + ".tmp"
 	fileData, err := json.MarshalIndent(roomData, "", "  ")
 	if err != nil {
 		fmt.Println("Error marshalling room data:", err)
 		return
 	}
+	if DBURL != "" {
+		if err := saveRoomRemote(room.roomCode, fileData); err != nil {
+			log.Printf("error saving room %s to database service: %v", room.roomCode, err)
+		}
+		return
+	}
+
+	filename := filepath.Join(DataDir, "room_"+room.roomCode+".json")
+	tmpfilename := filename + ".tmp"
 	// Write to temp file then rename so we prevent data loss
 	if err := os.WriteFile(tmpfilename, fileData, 0644); err != nil {
 		return
 	}
 	_ = os.Rename(tmpfilename, filename)
+}
+
+func decodeRoomJSON(fileData []byte, fallbackUpdatedAt int64) (*Room, bool) {
+	var data roomJSON
+	if err := json.Unmarshal(fileData, &data); err != nil || data.RoomCode == "" {
+		return nil, false
+	}
+
+	if data.Members == nil {
+		data.Members = map[string]Member{}
+	}
+	// Restore each member's secret UserID from the JSON map key
+	for userID, m := range data.Members {
+		m.UserID = userID
+		data.Members[userID] = m
+	}
+	if data.Queue == nil {
+		data.Queue = []Song{}
+	}
+	requests := make([]*SongRequest, 0, len(data.Requests))
+	for _, r := range data.Requests {
+		requests = append(requests, &SongRequest{
+			ID:          r.ID,
+			Song:        r.Song,
+			UserID:      r.UserID,
+			RequestedBy: r.RequestedBy,
+			Status:      r.Status,
+			Reason:      r.Reason,
+			Queued:      r.Queued,
+		})
+	}
+	if data.NextRequest > len(requests) {
+		data.NextRequest = len(requests)
+	}
+	if data.Name == "" {
+		if host, ok := data.Members[data.HostID]; ok && host.Name != "" {
+			data.Name = host.Name + "'s Jam"
+		}
+	}
+	if data.UpdatedAt == 0 && fallbackUpdatedAt != 0 {
+		data.UpdatedAt = fallbackUpdatedAt
+	}
+
+	return &Room{
+		roomCode:    data.RoomCode,
+		Name:        data.Name,
+		hostID:      data.HostID,
+		members:     data.Members,
+		Queue:       data.Queue,
+		Genre:       data.Genre,
+		Requests:    requests,
+		nextRequest: data.NextRequest,
+		UpdatedAt:   data.UpdatedAt,
+	}, true
 }
 
 func LoadExistingRoomsFromDatabase(dbDir string) map[string]*Room {
@@ -264,64 +326,15 @@ func LoadExistingRoomsFromDatabase(dbDir string) map[string]*Room {
 			continue // skip files that fail to read
 		}
 
-		// Unmarshal into your JSON representation struct
-		var data roomJSON
-		if err := json.Unmarshal(fileData, &data); err != nil || data.RoomCode == "" {
+		var fallbackUpdatedAt int64
+		if info, err := entry.Info(); err == nil {
+			fallbackUpdatedAt = info.ModTime().UnixNano()
+		}
+		rm, ok := decodeRoomJSON(fileData, fallbackUpdatedAt)
+		if !ok {
 			continue // skip corrupted files
 		}
-
-		if data.Members == nil {
-			data.Members = map[string]Member{}
-		}
-		// Restore each member's secret UserID from the JSON map key
-		for userID, m := range data.Members {
-			m.UserID = userID
-			data.Members[userID] = m
-		}
-		if data.Queue == nil {
-			data.Queue = []Song{}
-		}
-		requests := make([]*SongRequest, 0, len(data.Requests))
-		for _, r := range data.Requests {
-			requests = append(requests, &SongRequest{
-				ID:          r.ID,
-				Song:        r.Song,
-				UserID:      r.UserID,
-				RequestedBy: r.RequestedBy,
-				Status:      r.Status,
-				Reason:      r.Reason,
-				Queued:      r.Queued,
-			})
-		}
-		if data.NextRequest > len(requests) {
-			data.NextRequest = len(requests)
-		}
-		if data.Name == "" {
-			if host, ok := data.Members[data.HostID]; ok && host.Name != "" {
-				data.Name = host.Name + "'s Jam"
-			}
-		}
-		if data.UpdatedAt == 0 {
-			if info, err := entry.Info(); err == nil {
-				data.UpdatedAt = info.ModTime().UnixNano()
-			}
-		}
-
-		// Reconstruct the Room struct
-		room := &Room{
-			roomCode:    data.RoomCode,
-			Name:        data.Name,
-			hostID:      data.HostID,
-			members:     data.Members,
-			Queue:       data.Queue,
-			Genre:       data.Genre,
-			Requests:    requests,
-			nextRequest: data.NextRequest,
-			UpdatedAt:   data.UpdatedAt,
-		}
-
-		// Store it in active rooms map using the room code as key
-		activeRooms[room.roomCode] = room
+		activeRooms[rm.roomCode] = rm
 	}
 
 	return activeRooms

@@ -209,6 +209,12 @@ func (s *llmServer) classify(ctx context.Context, song Song, theme string) (mode
 	return decision, nil
 }
 
+func handleHealthz(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
+}
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -217,6 +223,7 @@ func main() {
 	srv := newLLMServer()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/moderate", srv.handleModerate)
+	mux.HandleFunc("/healthz", handleHealthz)
 
 	server := &http.Server{
 		Addr:              ":" + port,

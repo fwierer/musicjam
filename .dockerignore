@@ -3,7 +3,8 @@
 .env
 database/
 documentation/
+frontend/
 backend/LLM/
 backend/YouTube/
-backend/Player/
+backend/Database/
 *.md

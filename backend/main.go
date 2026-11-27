@@ -34,9 +34,11 @@ func main() {
 	if dataDir == "" {
 		dataDir = "../database"
 	}
-	room.DataDir = dataDir
-	_ = os.MkdirAll(room.DataDir, 0755)
-	rooms = room.LoadExistingRoomsFromDatabase(room.DataDir)
+	room.ConfigureStore(os.Getenv("DB_URL"), dataDir)
+	if room.DBURL == "" {
+		_ = os.MkdirAll(room.DataDir, 0755)
+	}
+	rooms = room.LoadRooms()
 	sessions = loadSessionsFromRooms(rooms)
 
 	port := strings.TrimSpace(os.Getenv("PORT"))

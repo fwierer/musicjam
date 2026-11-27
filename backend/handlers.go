@@ -25,7 +25,6 @@ var (
 
 func registerHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/api/youtube/search", handleYouTubeSearch)
-	mux.HandleFunc("/api/player/fallback", handlePlayerFallback)
 	mux.HandleFunc("/healthz", handleHealthz)
 	mux.HandleFunc("/api/room/create", createNewRoom)
 	mux.HandleFunc("/api/room/join", joinRoom)
@@ -39,9 +38,13 @@ func registerHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/api/session", getSession)
 	frontendDir := os.Getenv("FRONTEND_DIR")
 	if frontendDir == "" {
-		frontendDir = "../frontend"
+		if info, err := os.Stat("../frontend"); err == nil && info.IsDir() {
+			frontendDir = "../frontend"
+		}
 	}
-	mux.Handle("/", http.FileServer(http.Dir(frontendDir)))
+	if frontendDir != "" {
+		mux.Handle("/", http.FileServer(http.Dir(frontendDir)))
+	}
 }
 
 func handleHealthz(w http.ResponseWriter, r *http.Request) {

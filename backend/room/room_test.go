@@ -1,8 +1,13 @@
 package room
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -96,5 +101,59 @@ func TestRoomPersistenceAndMembersUnit(t *testing.T) {
 	}
 	if _, err := restored.RemoveMember(guest.ID); err != nil {
 		t.Fatalf("unexpected error removing guest: %v", err)
+	}
+}
+
+func TestRemoteDatabaseStoreRoundTrip(t *testing.T) {
+	oldDBURL, oldDir := DBURL, DataDir
+	t.Cleanup(func() { ConfigureStore(oldDBURL, oldDir) })
+
+	var mu sync.Mutex
+	stored := map[string][]byte{}
+	dbSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/rooms":
+			mu.Lock()
+			items := make([]json.RawMessage, 0, len(stored))
+			for _, raw := range stored {
+				items = append(items, json.RawMessage(raw))
+			}
+			mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(items)
+		case r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/rooms/"):
+			code := strings.TrimPrefix(r.URL.Path, "/rooms/")
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "bad body", http.StatusBadRequest)
+				return
+			}
+			mu.Lock()
+			stored[code] = body
+			mu.Unlock()
+			_, _ = w.Write([]byte(`{"status":"saved"}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer dbSrv.Close()
+
+	ConfigureStore(dbSrv.URL, "")
+	rm := NewRoom("host-uid", "Host", func(string) bool { return false })
+	rm.Name = "Remote Jam"
+	guest := rm.AddMember("guest-uid", "Guest")
+	rm.Queue = append(rm.Queue, Song{ID: "s1", VideoID: "abcdefghijk", Title: "Remote Song", Channel: "Chan"})
+	rm.Save()
+
+	loaded := LoadRooms()
+	restored := loaded[rm.Code()]
+	if restored == nil {
+		t.Fatal("expected room to be restored from remote DB")
+	}
+	if restored.Name != "Remote Jam" || len(restored.Queue) != 1 || restored.Queue[0].Title != "Remote Song" {
+		t.Fatalf("unexpected restored room: %+v", restored)
+	}
+	if m, ok := restored.Member("guest-uid"); !ok || m.UserID != "guest-uid" || m.ID != guest.ID {
+		t.Fatalf("expected guest UserID restored, got %+v", m)
 	}
 }
